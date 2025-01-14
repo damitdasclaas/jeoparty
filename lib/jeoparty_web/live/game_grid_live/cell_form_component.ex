@@ -27,7 +27,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
             type="select"
             label="Type"
             prompt="Choose a type"
-            options={[{"Text", "text"}, {"Picture", "picture"}]}
+            options={[{"Text", "text"}, {"Picture", "picture"}, {"Video", "video"}]}
           />
 
           <%= case input_value(@form, :type) do %>
@@ -47,6 +47,24 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                 field={@form[:image_url]}
                 type="text"
                 label="Image URL"
+              />
+            <% "video" -> %>
+              <.input
+                field={@form[:question]}
+                type="text"
+                label="Question"
+              />
+              <.input
+                field={@form[:video_url]}
+                type="text"
+                label="Video URL"
+                placeholder="YouTube or Vimeo URL"
+              />
+            <% _ -> %>
+              <.input
+                field={@form[:question]}
+                type="text"
+                label="Question"
               />
           <% end %>
 
