@@ -16,7 +16,7 @@ defmodule Jeoparty.Question.Cell do
   @doc false
   def changeset(cell, attrs) do
     cell
-    |> cast(attrs, [:row, :column, :data])
-    |> validate_required([:row, :column])
+    |> cast(attrs, [:row, :column, :data, :game_grid_id])
+    |> validate_required([:row, :column, :game_grid_id])
   end
 end

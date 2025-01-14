@@ -7,6 +7,7 @@ defmodule Jeoparty.GameGrids do
   alias Jeoparty.Repo
 
   alias Jeoparty.GameGrids.GameGrid
+  alias Jeoparty.Question.Cell
 
   @doc """
   Returns the list of game_grids.
@@ -100,5 +101,34 @@ defmodule Jeoparty.GameGrids do
   """
   def change_game_grid(%GameGrid{} = game_grid, attrs \\ %{}) do
     GameGrid.changeset(game_grid, attrs)
+  end
+
+  def get_cells_for_grid(grid_id) do
+    require Logger
+    Logger.info("Fetching cells for grid: #{grid_id}")
+
+    query = from c in Cell,
+      where: c.game_grid_id == ^grid_id
+
+    cells = Repo.all(query)
+    Logger.info("Found cells: #{inspect(cells)}")
+
+    cells
+  end
+
+  def delete_cell(%Cell{} = cell) do
+    Repo.delete(cell)
+  end
+
+  def update_cell(%Cell{} = cell, attrs) do
+    cell
+    |> Cell.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def create_cell(attrs \\ %{}) do
+    %Cell{}
+    |> Cell.changeset(attrs)
+    |> Repo.insert()
   end
 end
