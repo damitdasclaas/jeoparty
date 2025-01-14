@@ -7,8 +7,11 @@ defmodule Jeoparty.Repo.Migrations.CreateGameGrids do
       add :name, :string
       add :columns, :integer
       add :rows, :integer
+      add :created_by, references(:users, on_delete: :nothing, type: :binary_id)
 
       timestamps(type: :utc_datetime)
     end
+
+    create index(:game_grids, [:created_by])
   end
 end

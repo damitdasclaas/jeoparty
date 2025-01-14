@@ -1,0 +1,28 @@
+<.header>
+  Game grid {@game_grid.id}
+  <:subtitle>This is a game_grid record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/game_grids/#{@game_grid}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit game_grid</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Name">{@game_grid.name}</:item>
+  <:item title="Columns">{@game_grid.columns}</:item>
+  <:item title="Rows">{@game_grid.rows}</:item>
+</.list>
+
+<.back navigate={~p"/game_grids"}>Back to game_grids</.back>
+
+<.modal :if={@live_action == :edit} id="game_grid-modal" show on_cancel={JS.patch(~p"/game_grids/#{@game_grid}")}>
+  <.live_component
+    module={JeopartyWeb.GameGridLive.FormComponent}
+    id={@game_grid.id}
+    title={@page_title}
+    action={@live_action}
+    game_grid={@game_grid}
+    patch={~p"/game_grids/#{@game_grid}"}
+  />
+</.modal>

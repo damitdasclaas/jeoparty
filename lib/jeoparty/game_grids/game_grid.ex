@@ -1,4 +1,4 @@
-defmodule Jeoparty.Game.Grid do
+defmodule Jeoparty.GameGrids.GameGrid do
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -9,15 +9,15 @@ defmodule Jeoparty.Game.Grid do
     field :columns, :integer
     field :rows, :integer
 
-    has_many :question_cells, Jeoparty.Question.Cell, foreign_key: :game_grid_id
+    belongs_to :user, Jeoparty.Accounts.User, foreign_key: :created_by
 
     timestamps(type: :utc_datetime)
   end
 
   @doc false
-  def changeset(grid, attrs) do
-    grid
-    |> cast(attrs, [:name, :columns, :rows])
-    |> validate_required([:name, :columns, :rows])
+  def changeset(game_grid, attrs) do
+    game_grid
+    |> cast(attrs, [:name, :columns, :rows, :created_by])
+    |> validate_required([:name, :columns, :rows, :created_by])
   end
 end
