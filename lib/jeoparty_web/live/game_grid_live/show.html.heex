@@ -24,9 +24,20 @@
                 if(cell.is_category, do: "bg-blue-800 text-white", else: "bg-blue-600 text-white hover:bg-blue-700")
               ]}>
                 <div class="absolute inset-0 flex flex-col p-3">
-                  <div class="flex-grow flex items-center justify-center text-center font-medium">
-                    <%= cell.data["question"] %>
-                  </div>
+                  <%= if cell.is_category do %>
+                    <div class="flex-grow flex items-center justify-center text-center font-medium">
+                      <%= cell.data["question"] %>
+                    </div>
+                  <% else %>
+                    <div class="flex-grow flex flex-col items-center justify-center text-center">
+                      <%= if cell.data["question"] do %>
+                        <div class="font-medium"><%= cell.data["question"] %></div>
+                        <div class="text-sm mt-1"><%= cell.data["points"] %></div>
+                      <% else %>
+                        <div class="text-2xl font-bold"><%= cell.data["points"] || get_points(row) %></div>
+                      <% end %>
+                    </div>
+                  <% end %>
                   <div class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <.button 
                       phx-click="edit_cell" 
@@ -63,11 +74,12 @@
               <% else %>
                 <div class="w-full h-32">
                   <.button 
-                    class="w-full h-full bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center" 
+                    class="w-full h-full bg-blue-600 hover:bg-blue-700 transition-colors flex flex-col items-center justify-center gap-2" 
                     phx-click="open_cell_modal" 
                     phx-value-row={row} 
                     phx-value-col={col}
                   >
+                    <div class="text-2xl font-bold"><%= get_points(row) %></div>
                     <.icon name="hero-plus" class="h-6 w-6"/>
                   </.button>
                 </div>
@@ -104,5 +116,6 @@
     game_grid_id={@game_grid.id}
     patch={~p"/game_grids/#{@game_grid}"}
     editing_cell={@editing_cell}
+    points={@points}
   />
 </.modal>

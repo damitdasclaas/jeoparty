@@ -6,6 +6,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
 
   @impl true
   def render(assigns) do
+    assigns = assign_new(assigns, :points, fn -> nil end)
     ~H"""
     <div>
       <.header>
@@ -21,9 +22,17 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         <.input
           field={@form[:question]}
           type="text"
-          label={input_label(assigns)}
+          label="Question"
           value={@editing_cell && @editing_cell.data["question"]}
         />
+        <%= if !assigns[:selected_row] || assigns.selected_row != 1 do %>
+          <.input
+            field={@form[:points]}
+            type="number"
+            label="Points"
+            value={@editing_cell && @editing_cell.data["points"] || @points}
+          />
+        <% end %>
         <:actions>
           <.button phx-disable-with="Saving...">Save</.button>
         </:actions>
@@ -38,9 +47,6 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   defp header_text(assigns) do
     if assigns.editing_cell, do: "Edit Question", else: "Add Question"
   end
-
-  defp input_label(%{selected_row: 1}), do: "Category"
-  defp input_label(_), do: "Question"
 
   @impl true
   def update(assigns, socket) do
@@ -59,12 +65,15 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   end
 
   @impl true
-  def handle_event("save", %{"cell" => %{"question" => question}}, socket) do
+  def handle_event("save", %{"cell" => %{"question" => question, "points" => points}}, socket) do
     attrs = %{
       row: socket.assigns.row,
       column: socket.assigns.column,
       game_grid_id: socket.assigns.game_grid_id,
-      data: %{"question" => question}
+      data: %{
+        "question" => question,
+        "points" => points
+      }
     }
 
     if socket.assigns.editing_cell do
@@ -84,7 +93,11 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
          |> push_patch(to: socket.assigns.patch)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign_form(socket, changeset)}
+        error_message = get_changeset_error(changeset)
+        {:noreply,
+         socket
+         |> put_flash(:error, error_message)
+         |> assign_form(changeset)}
     end
   end
 
@@ -98,12 +111,31 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
          |> push_patch(to: socket.assigns.patch)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign_form(socket, changeset)}
+        error_message = get_changeset_error(changeset)
+        {:noreply,
+         socket
+         |> put_flash(:error, error_message)
+         |> assign_form(changeset)}
     end
   end
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     form = to_form(changeset, as: "cell")
     assign(socket, :form, form)
+  end
+
+  # Helper to get a friendly error message from the changeset
+  defp get_changeset_error(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+      Enum.reduce(opts, msg, fn {key, value}, acc ->
+        String.replace(acc, "%{#{key}}", to_string(value))
+      end)
+    end)
+    |> Enum.map(fn {_key, value} -> value end)
+    |> List.first()
+    |> case do
+      nil -> "Could not save cell"
+      message -> message
+    end
   end
 end

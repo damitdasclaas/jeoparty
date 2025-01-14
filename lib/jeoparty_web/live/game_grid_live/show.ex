@@ -32,11 +32,15 @@ defmodule JeopartyWeb.GameGridLive.Show do
 
   @impl true
   def handle_event("open_cell_modal", %{"row" => row, "col" => col}, socket) do
+    row = String.to_integer(row)
+    points = get_points(row)
+
     {:noreply,
      socket
      |> assign(:show_cell_modal, true)
-     |> assign(:selected_row, String.to_integer(row))
+     |> assign(:selected_row, row)
      |> assign(:selected_column, String.to_integer(col))
+     |> assign(:points, points)
      |> assign(:editing_cell, nil)}
   end
 
@@ -62,12 +66,14 @@ defmodule JeopartyWeb.GameGridLive.Show do
   @impl true
   def handle_event("edit_cell", %{"id" => id}, socket) do
     cell = Enum.find(socket.assigns.cells, &(&1.id == id))
+    points = cell.data["points"] || get_points(cell.row)
 
     {:noreply,
      socket
      |> assign(:show_cell_modal, true)
      |> assign(:selected_row, cell.row)
      |> assign(:selected_column, cell.column)
+     |> assign(:points, points)
      |> assign(:editing_cell, cell)}
   end
 
@@ -102,5 +108,9 @@ defmodule JeopartyWeb.GameGridLive.Show do
     Enum.find(cells, fn cell ->
       cell.row == row && cell.column == col
     end)
+  end
+
+  defp get_points(row) do
+    if row > 1, do: (row - 1) * 100, else: nil
   end
 end

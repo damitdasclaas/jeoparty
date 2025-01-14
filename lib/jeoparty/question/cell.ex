@@ -20,6 +20,9 @@ defmodule Jeoparty.Question.Cell do
     |> cast(attrs, [:row, :column, :data, :game_grid_id, :is_category])
     |> validate_required([:row, :column, :game_grid_id])
     |> maybe_set_category()
+    |> unique_constraint([:game_grid_id, :row, :column],
+      name: :question_cells_position_index,
+      message: "A cell already exists at this position")
   end
 
   defp maybe_set_category(changeset) do
