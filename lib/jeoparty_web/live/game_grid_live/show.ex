@@ -125,4 +125,12 @@ defmodule JeopartyWeb.GameGridLive.Show do
   defp get_points(row) do
     if row > 1, do: (row - 1) * 100, else: nil
   end
+
+  defp truncate_text(text, length \\ 30) do
+    if String.length(text) > length do
+      String.slice(text, 0, length) <> "..."
+    else
+      text
+    end
+  end
 end

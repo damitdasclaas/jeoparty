@@ -29,12 +29,20 @@
                       <%= if cell.data["question"] do %>
                         <%= case cell.type do %>
                           <% "picture" -> %>
-                            <div class="font-medium text-lg"><%= cell.data["question"] %></div>
-                            <img src={cell.data["image_url"]} alt={cell.data["question"]} class="mt-2 max-h-16 object-contain" />
-                            <div class="text-sm mt-2 font-semibold text-blue-200">$<%= cell.data["points"] %></div>
-                          <% "text" -> %>
-                            <div class="font-medium text-lg"><%= cell.data["question"] %></div>
-                            <div class="text-sm mt-2 font-semibold text-blue-200">$<%= cell.data["points"] %></div>
+                            <div class="flex flex-col items-center h-full justify-between">
+                              <img src={cell.data["image_url"]} alt={cell.data["question"]} class="max-h-12 object-contain" />
+                              <div class="font-medium text-xs text-center px-2">
+                                <%= truncate_text(cell.data["question"], 15) %>
+                              </div>
+                              <div class="text-sm font-semibold text-blue-200">$<%= cell.data["points"] %></div>
+                            </div>
+                          <% _ -> %>
+                            <div class="flex flex-col items-center h-full justify-between">
+                              <div class="font-medium text-sm text-center px-2">
+                                <%= truncate_text(cell.data["question"], 15) %>
+                              </div>
+                              <div class="text-sm font-semibold text-blue-200">$<%= cell.data["points"] %></div>
+                            </div>
                         <% end %>
                       <% else %>
                         <div class="text-3xl font-bold">$<%= cell.data["points"] || get_points(row) %></div>
