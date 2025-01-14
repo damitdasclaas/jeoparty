@@ -19,13 +19,14 @@
         <%= for col <- 1..@game_grid.columns do %>
           <td class="border p-2">
             <%= if cell = get_cell(@cells, row, col) do %>
-              <div class="w-full h-32 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors relative group">
+              <div class={[
+                "w-full h-32 rounded relative group transition-colors",
+                if(cell.is_category, do: "bg-blue-800 text-white", else: "bg-blue-600 text-white hover:bg-blue-700")
+              ]}>
                 <div class="absolute inset-0 flex flex-col p-3">
-                  <%!-- Question text --%>
                   <div class="flex-grow flex items-center justify-center text-center font-medium">
                     <%= cell.data["question"] %>
                   </div>
-                  <%!-- Action buttons --%>
                   <div class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <.button 
                       phx-click="edit_cell" 
@@ -46,16 +47,31 @@
                 </div>
               </div>
             <% else %>
-              <div class="w-full h-32">
-                <.button 
-                  class="w-full h-full bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center" 
-                  phx-click="open_cell_modal" 
-                  phx-value-row={row} 
-                  phx-value-col={col}
-                >
-                  <.icon name="hero-plus" class="h-6 w-6"/>
-                </.button>
-              </div>
+              <%= if row == 1 do %>
+                <div class="w-full h-32 bg-blue-800 rounded">
+                  <.form for={%{}} phx-submit="save_category">
+                    <input type="hidden" name="phx-value-col" value={col} />
+                    <input 
+                      type="text" 
+                      name="category" 
+                      class="w-full h-full bg-transparent text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder="Enter category and press Enter..."
+                      autocomplete="off"
+                    />
+                  </.form>
+                </div>
+              <% else %>
+                <div class="w-full h-32">
+                  <.button 
+                    class="w-full h-full bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center" 
+                    phx-click="open_cell_modal" 
+                    phx-value-row={row} 
+                    phx-value-col={col}
+                  >
+                    <.icon name="hero-plus" class="h-6 w-6"/>
+                  </.button>
+                </div>
+              <% end %>
             <% end %>
           </td>
         <% end %>

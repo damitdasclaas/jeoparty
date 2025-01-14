@@ -71,6 +71,27 @@ defmodule JeopartyWeb.GameGridLive.Show do
      |> assign(:editing_cell, cell)}
   end
 
+  @impl true
+  def handle_event("save_category", %{"category" => category, "phx-value-col" => col}, socket) do
+    attrs = %{
+      row: 1,
+      column: String.to_integer(col),
+      game_grid_id: socket.assigns.game_grid.id,
+      data: %{"question" => category}
+    }
+
+    case GameGrids.create_cell(attrs) do
+      {:ok, _cell} ->
+        {:noreply,
+         socket
+         |> assign(:cells, GameGrids.get_cells_for_grid(socket.assigns.game_grid.id))
+         |> put_flash(:info, "Category added successfully")}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Could not add category")}
+    end
+  end
+
   defp page_title(:show), do: "Show Game grid"
   defp page_title(:edit), do: "Edit Game grid"
 

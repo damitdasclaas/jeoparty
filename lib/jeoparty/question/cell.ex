@@ -9,6 +9,7 @@ defmodule Jeoparty.Question.Cell do
     field :column, :integer
     field :row, :integer
     field :game_grid_id, :binary_id
+    field :is_category, :boolean, default: false
 
     timestamps(type: :utc_datetime)
   end
@@ -16,7 +17,15 @@ defmodule Jeoparty.Question.Cell do
   @doc false
   def changeset(cell, attrs) do
     cell
-    |> cast(attrs, [:row, :column, :data, :game_grid_id])
+    |> cast(attrs, [:row, :column, :data, :game_grid_id, :is_category])
     |> validate_required([:row, :column, :game_grid_id])
+    |> maybe_set_category()
+  end
+
+  defp maybe_set_category(changeset) do
+    case get_field(changeset, :row) do
+      1 -> put_change(changeset, :is_category, true)
+      _ -> changeset
+    end
   end
 end

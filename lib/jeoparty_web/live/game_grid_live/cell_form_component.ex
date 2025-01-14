@@ -9,7 +9,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
     ~H"""
     <div>
       <.header>
-        <%= if @editing_cell, do: "Edit Question", else: "Add Question" %>
+        <%= header_text(assigns) %>
       </.header>
 
       <.simple_form
@@ -18,7 +18,12 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         phx-target={@myself}
         phx-submit="save"
       >
-        <.input field={@form[:question]} type="text" label="Question" value={@editing_cell && @editing_cell.data["question"]} />
+        <.input
+          field={@form[:question]}
+          type="text"
+          label={input_label(assigns)}
+          value={@editing_cell && @editing_cell.data["question"]}
+        />
         <:actions>
           <.button phx-disable-with="Saving...">Save</.button>
         </:actions>
@@ -26,6 +31,16 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
     </div>
     """
   end
+
+  defp header_text(%{selected_row: 1} = assigns) do
+    if assigns.editing_cell, do: "Edit Category", else: "Add Category"
+  end
+  defp header_text(assigns) do
+    if assigns.editing_cell, do: "Edit Question", else: "Add Question"
+  end
+
+  defp input_label(%{selected_row: 1}), do: "Category"
+  defp input_label(_), do: "Question"
 
   @impl true
   def update(assigns, socket) do
