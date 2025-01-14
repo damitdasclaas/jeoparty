@@ -1,6 +1,5 @@
 <.header>
-  Game grid {@game_grid.id}
-  <:subtitle>This is a game_grid record from your database.</:subtitle>
+  {@game_grid.name}
   <:actions>
     <.link patch={~p"/game_grids/#{@game_grid}/show/edit"} phx-click={JS.push_focus()}>
       <.button>Edit game_grid</.button>
@@ -9,10 +8,25 @@
 </.header>
 
 <.list>
-  <:item title="Name">{@game_grid.name}</:item>
   <:item title="Columns">{@game_grid.columns}</:item>
   <:item title="Rows">{@game_grid.rows}</:item>
 </.list>
+
+<div class="mt-8">
+  <table class="w-full border-collapse">
+    <%= for row <- 1..@game_grid.rows do %>
+      <tr class="border">
+        <%= for col <- 1..@game_grid.columns do %>
+          <td class="border p-4 text-center">
+            <.button class="w-full h-full">
+              <.icon name="hero-plus" class="h-5 w-5"/>
+            </.button>
+          </td>
+        <% end %>
+      </tr>
+    <% end %>
+  </table>
+</div>
 
 <.back navigate={~p"/game_grids"}>Back to game_grids</.back>
 
@@ -24,5 +38,6 @@
     action={@live_action}
     game_grid={@game_grid}
     patch={~p"/game_grids/#{@game_grid}"}
+    current_user={@current_user}
   />
 </.modal>

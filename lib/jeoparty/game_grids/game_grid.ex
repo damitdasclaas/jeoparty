@@ -6,8 +6,8 @@ defmodule Jeoparty.GameGrids.GameGrid do
   @foreign_key_type :binary_id
   schema "game_grids" do
     field :name, :string
-    field :columns, :integer
-    field :rows, :integer
+    field :columns, :integer, default: 4
+    field :rows, :integer, default: 3
 
     belongs_to :user, Jeoparty.Accounts.User, foreign_key: :created_by
 
