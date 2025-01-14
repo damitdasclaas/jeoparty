@@ -103,14 +103,16 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         "type" => assigns.editing_cell.type,
         "question" => assigns.editing_cell.data["question"],
         "points" => assigns.editing_cell.data["points"],
-        "image_url" => assigns.editing_cell.data["image_url"]
+        "image_url" => assigns.editing_cell.data["image_url"],
+        "video_url" => assigns.editing_cell.data["video_url"]
       }
     else
       %{
         "type" => "text",
         "question" => "",
         "points" => assigns[:points],
-        "image_url" => ""
+        "image_url" => "",
+        "video_url" => ""
       }
     end
 
@@ -145,7 +147,8 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
       data: %{
         "question" => params["question"],
         "points" => if(params["points"] == "", do: nil, else: params["points"]),
-        "image_url" => params["image_url"]
+        "image_url" => params["image_url"],
+        "video_url" => params["video_url"]
       }
     }
 

@@ -127,7 +127,12 @@
   />
 </.modal>
 
-<.modal :if={@show_cell_modal} id="cell-modal" show on_cancel={JS.patch(~p"/game_grids/#{@game_grid}")}>
+<.modal 
+  :if={@show_cell_modal} 
+  id="cell-modal" 
+  show 
+  on_cancel={JS.push("modal-closed") |> JS.patch(~p"/game_grids/#{@game_grid}")}
+>
   <.live_component
     module={JeopartyWeb.GameGridLive.CellFormComponent}
     id="new-cell"

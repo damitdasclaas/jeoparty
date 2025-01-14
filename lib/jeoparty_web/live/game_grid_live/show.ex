@@ -61,6 +61,7 @@ defmodule JeopartyWeb.GameGridLive.Show do
      |> assign(:selected_row, nil)
      |> assign(:selected_column, nil)
      |> assign(:editing_cell, nil)
+     |> assign(:points, nil)
      |> assign(:cells, GameGrids.get_cells_for_grid(socket.assigns.game_grid.id))}
   end
 
@@ -108,6 +109,17 @@ defmodule JeopartyWeb.GameGridLive.Show do
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Could not add category")}
     end
+  end
+
+  @impl true
+  def handle_event("modal-closed", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_cell_modal, false)
+     |> assign(:selected_row, nil)
+     |> assign(:selected_column, nil)
+     |> assign(:editing_cell, nil)
+     |> assign(:points, nil)}
   end
 
   defp page_title(:show), do: "Show Game grid"
