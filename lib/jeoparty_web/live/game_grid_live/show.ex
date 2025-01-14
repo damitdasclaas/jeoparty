@@ -45,6 +45,15 @@ defmodule JeopartyWeb.GameGridLive.Show do
   end
 
   @impl true
+  def handle_info({JeopartyWeb.GameGridLive.FormComponent, {:saved, game_grid}}, socket) do
+    {:noreply,
+     socket
+     |> assign(:game_grid, game_grid)
+     |> assign(:cells, GameGrids.get_cells_for_grid(game_grid.id))
+     |> put_flash(:info, "Game grid updated successfully")}
+  end
+
+  @impl true
   def handle_info({:cell_created}, socket) do
     {:noreply,
      socket
