@@ -58,6 +58,9 @@ defmodule JeopartyWeb.GameGridLive.Show do
     {:noreply,
      socket
      |> assign(:show_cell_modal, false)
+     |> assign(:selected_row, nil)
+     |> assign(:selected_column, nil)
+     |> assign(:editing_cell, nil)
      |> assign(:cells, GameGrids.get_cells_for_grid(socket.assigns.game_grid.id))}
   end
 

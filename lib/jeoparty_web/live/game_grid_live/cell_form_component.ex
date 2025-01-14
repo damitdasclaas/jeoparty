@@ -1,5 +1,6 @@
 defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   use JeopartyWeb, :live_component
+  import Phoenix.HTML.Form
 
   alias Jeoparty.Question.Cell
   alias Jeoparty.GameGrids
@@ -18,19 +19,48 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         id="cell-form"
         phx-target={@myself}
         phx-submit="save"
+        phx-change="validate"
       >
-        <.input
-          field={@form[:question]}
-          type="text"
-          label="Question"
-          value={@editing_cell && @editing_cell.data["question"]}
-        />
         <%= if !assigns[:selected_row] || assigns.selected_row != 1 do %>
+          <.input
+            field={@form[:type]}
+            type="select"
+            label="Type"
+            prompt="Choose a type"
+            options={[{"Text", "text"}, {"Picture", "picture"}]}
+          />
+
+          <%= case input_value(@form, :type) do %>
+            <% "text" -> %>
+              <.input
+                field={@form[:question]}
+                type="text"
+                label="Question"
+              />
+            <% "picture" -> %>
+              <.input
+                field={@form[:question]}
+                type="text"
+                label="Question"
+              />
+              <.input
+                field={@form[:image_url]}
+                type="text"
+                label="Image URL"
+              />
+          <% end %>
+
           <.input
             field={@form[:points]}
             type="number"
             label="Points"
-            value={@editing_cell && @editing_cell.data["points"] || @points}
+            value={@points}
+          />
+        <% else %>
+          <.input
+            field={@form[:question]}
+            type="text"
+            label="Category"
           />
         <% end %>
         <:actions>
@@ -50,12 +80,23 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
 
   @impl true
   def update(assigns, socket) do
-    changeset =
-      if assigns[:editing_cell] do
-        Cell.changeset(assigns.editing_cell, %{})
-      else
-        Cell.changeset(%Cell{}, %{data: %{}})
-      end
+    initial_params = if assigns[:editing_cell] do
+      %{
+        "type" => assigns.editing_cell.type,
+        "question" => assigns.editing_cell.data["question"],
+        "points" => assigns.editing_cell.data["points"],
+        "image_url" => assigns.editing_cell.data["image_url"]
+      }
+    else
+      %{
+        "type" => "text",
+        "question" => "",
+        "points" => assigns[:points],
+        "image_url" => ""
+      }
+    end
+
+    changeset = Cell.changeset(%Cell{}, initial_params)
 
     {:ok,
      socket
@@ -65,16 +106,32 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   end
 
   @impl true
-  def handle_event("save", %{"cell" => %{"question" => question, "points" => points}}, socket) do
+  def handle_event("validate", %{"cell" => params}, socket) do
+    changeset =
+      %Cell{}
+      |> Cell.changeset(params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign_form(socket, changeset)}
+  end
+
+  @impl true
+  def handle_event("save", %{"cell" => params}, socket) do
+    IO.inspect(params, label: "Save Params")
+
     attrs = %{
       row: socket.assigns.row,
       column: socket.assigns.column,
       game_grid_id: socket.assigns.game_grid_id,
+      type: params["type"] || "text",
       data: %{
-        "question" => question,
-        "points" => points
+        "question" => params["question"],
+        "points" => if(params["points"] == "", do: nil, else: params["points"]),
+        "image_url" => params["image_url"]
       }
     }
+
+    IO.inspect(attrs, label: "Final Attrs")
 
     if socket.assigns.editing_cell do
       update_cell(socket.assigns.editing_cell, attrs, socket)

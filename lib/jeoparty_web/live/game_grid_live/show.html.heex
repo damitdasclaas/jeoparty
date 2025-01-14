@@ -27,8 +27,15 @@
                   <% else %>
                     <div class="flex-grow flex flex-col items-center justify-center text-center">
                       <%= if cell.data["question"] do %>
-                        <div class="font-medium text-lg"><%= cell.data["question"] %></div>
-                        <div class="text-sm mt-2 font-semibold text-blue-200">$<%= cell.data["points"] %></div>
+                        <%= case cell.type do %>
+                          <% "picture" -> %>
+                            <div class="font-medium text-lg"><%= cell.data["question"] %></div>
+                            <img src={cell.data["image_url"]} alt={cell.data["question"]} class="mt-2 max-h-16 object-contain" />
+                            <div class="text-sm mt-2 font-semibold text-blue-200">$<%= cell.data["points"] %></div>
+                          <% "text" -> %>
+                            <div class="font-medium text-lg"><%= cell.data["question"] %></div>
+                            <div class="text-sm mt-2 font-semibold text-blue-200">$<%= cell.data["points"] %></div>
+                        <% end %>
                       <% else %>
                         <div class="text-3xl font-bold">$<%= cell.data["points"] || get_points(row) %></div>
                       <% end %>
