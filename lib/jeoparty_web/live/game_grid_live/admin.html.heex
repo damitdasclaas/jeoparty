@@ -1,0 +1,76 @@
+<div class="container mx-auto px-4">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold">Admin View - <%= @game_grid.name %></h1>
+    <button class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            phx-click="hide_all">
+      Hide All
+    </button>
+  </div>
+  
+  <table class="w-full border-collapse">
+    <%= for row <- 1..@game_grid.rows do %>
+      <tr>
+        <%= for col <- 1..@game_grid.columns do %>
+          <td class="p-2" style={"min-width: 200px; width: #{100/@game_grid.columns}%"}>
+            <%= if cell = Enum.find(@cells, &(&1.row == row && &1.column == col)) do %>
+              <div class={[
+                "w-full h-32 rounded-xl shadow-lg relative group transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1",
+                cell.is_category && "bg-gradient-to-br from-blue-700 to-blue-900 text-white" || 
+                "bg-gradient-to-br from-blue-500 to-blue-700 text-white"
+              ]}>
+                <div class="absolute inset-0 flex flex-col p-4">
+                  <%= if cell.is_category do %>
+                    <div class="flex-grow flex items-center justify-center text-center font-bold text-lg tracking-wide">
+                      <%= cell.data["question"] %>
+                    </div>
+                  <% else %>
+                    <div class="flex-grow flex flex-col items-center justify-center text-center">
+                      <div class="font-medium text-sm text-center px-2">
+                        <%= cell.data["question"] %>
+                      </div>
+                      <div class="text-sm font-semibold text-blue-200">$<%= cell.data["points"] || (cell.row - 1) * 100 %></div>
+                      <div class="text-xs text-blue-200 mt-1">Answer: <%= cell.data["answer"] %></div>
+                    </div>
+                  <% end %>
+                  <div class="absolute bottom-2 right-2 flex gap-1.5">
+                    <%= unless cell.is_category do %>
+                      <button class={[
+                        "!p-1.5 rounded-lg backdrop-blur-sm",
+                        if(MapSet.member?(@revealed_cells, cell.id), 
+                          do: "bg-red-500/80 hover:bg-red-600/80",
+                          else: "bg-green-500/80 hover:bg-green-600/80")
+                      ]}
+                              phx-click={if MapSet.member?(@revealed_cells, cell.id), do: "hide_cell", else: "reveal_cell"}
+                              phx-value-id={cell.id}>
+                        <%= if MapSet.member?(@revealed_cells, cell.id) do %>
+                          <.icon name="hero-eye-slash" class="h-4 w-4"/>
+                        <% else %>
+                          <.icon name="hero-eye" class="h-4 w-4"/>
+                        <% end %>
+                      </button>
+
+                      <button class={[
+                        "!p-1.5 rounded-lg backdrop-blur-sm",
+                        if(@viewed_cell_id == cell.id,
+                          do: "bg-yellow-500/80 hover:bg-yellow-600/80",
+                          else: "bg-blue-500/80 hover:bg-blue-600/80")
+                      ]}
+                              phx-click="view_cell"
+                              phx-value-id={cell.id}>
+                        <%= if @viewed_cell_id == cell.id do %>
+                          <.icon name="hero-stop" class="h-4 w-4"/>
+                        <% else %>
+                          <.icon name="hero-play" class="h-4 w-4"/>
+                        <% end %>
+                      </button>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </td>
+        <% end %>
+      </tr>
+    <% end %>
+  </table>
+</div>

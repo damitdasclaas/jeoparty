@@ -1,5 +1,5 @@
 <.header>
-  {@game_grid.name}
+  <%= @game_grid.name %>
   <:actions>
     <.link patch={~p"/game_grids/#{@game_grid}/show/edit"} phx-click={JS.push_focus()}>
       <.button>Edit game_grid</.button>
@@ -12,7 +12,7 @@
     <%= for row <- 1..@game_grid.rows do %>
       <tr>
         <%= for col <- 1..@game_grid.columns do %>
-          <td class="p-2">
+          <td class="p-2" style={"min-width: 200px; width: #{100/@game_grid.columns}%"}>
             <%= if cell = get_cell(@cells, row, col) do %>
               <div class={[
                 "w-full h-32 rounded-xl shadow-lg relative group transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1",
