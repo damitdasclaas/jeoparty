@@ -10,9 +10,9 @@ defmodule Jeoparty.Question.Cell do
     field :data, :map
     field :column, :integer
     field :row, :integer
-    field :game_grid_id, :binary_id
     field :is_category, :boolean, default: false
     field :type, :string, default: "text"
+    belongs_to :game_grid, Jeoparty.GameGrids.GameGrid
 
     timestamps(type: :utc_datetime)
   end

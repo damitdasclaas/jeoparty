@@ -10,6 +10,7 @@ defmodule Jeoparty.GameGrids.GameGrid do
     field :rows, :integer, default: 3
 
     belongs_to :user, Jeoparty.Accounts.User, foreign_key: :created_by
+    has_many :cells, Jeoparty.Question.Cell, on_delete: :delete_all
 
     timestamps(type: :utc_datetime)
   end
