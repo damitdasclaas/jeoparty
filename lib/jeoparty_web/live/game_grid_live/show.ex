@@ -115,6 +115,38 @@ defmodule JeopartyWeb.GameGridLive.Show do
      |> assign(:points, nil)}
   end
 
+  def handle_event("delete_category", %{"id" => id}, socket) do
+    cell = Enum.find(socket.assigns.cells, &(&1.id == id))
+    {:ok, _} = GameGrids.delete_cell(cell)
+
+    {:noreply,
+     socket
+     |> assign(:cells, GameGrids.get_cells_for_grid(socket.assigns.game_grid.id))
+     |> put_flash(:info, "Category deleted")}
+  end
+
+  @impl true
+  def handle_event("handle_category_keyup", %{"key" => key, "target" => %{"value" => value}, "phx-value-col" => col}, socket) do
+    if key == "Enter" and String.trim(value) != "" do
+      handle_event("update_category", %{"value" => value, "col" => col}, socket)
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("handle_category_keyup", _params, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("save_category", %{"category" => category, "col" => col}, socket) do
+    if String.trim(category) != "" do
+      handle_event("update_category", %{"value" => category, "col" => col}, socket)
+    else
+      {:noreply, socket}
+    end
+  end
+
   @impl true
   def handle_info({JeopartyWeb.GameGridLive.FormComponent, {:saved, game_grid}}, socket) do
     {:noreply,
@@ -160,35 +192,5 @@ defmodule JeopartyWeb.GameGridLive.Show do
     end
   end
 
-  def handle_event("delete_category", %{"id" => id}, socket) do
-    cell = Enum.find(socket.assigns.cells, &(&1.id == id))
-    {:ok, _} = GameGrids.delete_cell(cell)
 
-    {:noreply,
-     socket
-     |> assign(:cells, GameGrids.get_cells_for_grid(socket.assigns.game_grid.id))
-     |> put_flash(:info, "Category deleted")}
-  end
-
-  @impl true
-  def handle_event("handle_category_keyup", %{"key" => key, "target" => %{"value" => value}, "phx-value-col" => col}, socket) do
-    if key == "Enter" and String.trim(value) != "" do
-      handle_event("update_category", %{"value" => value, "col" => col}, socket)
-    else
-      {:noreply, socket}
-    end
-  end
-
-  def handle_event("handle_category_keyup", _params, socket) do
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_event("save_category", %{"category" => category, "col" => col}, socket) do
-    if String.trim(category) != "" do
-      handle_event("update_category", %{"value" => category, "col" => col}, socket)
-    else
-      {:noreply, socket}
-    end
-  end
 end
