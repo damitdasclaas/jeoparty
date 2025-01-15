@@ -1,0 +1,44 @@
+<.header>
+  Listing Game grids
+  <:actions>
+    <.link patch={~p"/game_grids/new"}>
+      <.button>New Game grid</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="game_grids"
+  rows={@streams.game_grids}
+  row_click={fn {_id, game_grid} -> JS.navigate(~p"/game_grids/#{game_grid}") end}
+>
+  <:col :let={{_id, game_grid}} label="Name">{game_grid.name}</:col>
+  <:col :let={{_id, game_grid}} label="Columns">{game_grid.columns}</:col>
+  <:col :let={{_id, game_grid}} label="Rows">{game_grid.rows}</:col>
+  <:action :let={{_id, game_grid}}>
+    <div class="sr-only">
+      <.link navigate={~p"/game_grids/#{game_grid}"}>Show</.link>
+    </div>
+    <.link patch={~p"/game_grids/#{game_grid}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, game_grid}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: game_grid.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="game_grid-modal" show on_cancel={JS.patch(~p"/game_grids")}>
+  <.live_component
+    module={JeopartyWeb.GameGridLive.FormComponent}
+    id={@game_grid.id || :new}
+    title={@page_title}
+    action={@live_action}
+    game_grid={@game_grid}
+    current_user={@current_user}
+    patch={~p"/game_grids"}
+  />
+</.modal>

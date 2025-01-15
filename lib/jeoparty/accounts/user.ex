@@ -10,6 +10,8 @@ defmodule Jeoparty.Accounts.User do
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
 
+    has_many :game_grids, Jeoparty.GameGrids.GameGrid, foreign_key: :created_by
+
     timestamps(type: :utc_datetime)
   end
 

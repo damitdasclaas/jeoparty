@@ -1,0 +1,147 @@
+<.header>
+  {@game_grid.name}
+  <:actions>
+    <.link patch={~p"/game_grids/#{@game_grid}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit game_grid</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<div class="mt-8">
+  <table class="w-full border-collapse">
+    <%= for row <- 1..@game_grid.rows do %>
+      <tr>
+        <%= for col <- 1..@game_grid.columns do %>
+          <td class="p-2">
+            <%= if cell = get_cell(@cells, row, col) do %>
+              <div class={[
+                "w-full h-32 rounded-xl shadow-lg relative group transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1",
+                cell.is_category && "bg-gradient-to-br from-blue-700 to-blue-900 text-white" || 
+                "bg-gradient-to-br from-blue-500 to-blue-700 text-white"
+              ]}>
+                <div class="absolute inset-0 flex flex-col p-4">
+                  <%= if cell.is_category do %>
+                    <div class="flex-grow flex items-center justify-center text-center font-bold text-lg tracking-wide">
+                      <%= cell.data["question"] %>
+                    </div>
+                  <% else %>
+                    <div class="flex-grow flex flex-col items-center justify-center text-center">
+                      <%= if cell.data["question"] do %>
+                        <%= case cell.type do %>
+                          <% "picture" -> %>
+                            <div class="flex flex-col items-center h-full justify-between">
+                              <img src={cell.data["image_url"]} alt={cell.data["question"]} class="max-h-12 object-contain" />
+                              <div class="font-medium text-xs text-center px-2">
+                                <%= truncate_text(cell.data["question"], 15) %>
+                              </div>
+                              <div class="text-sm font-semibold text-blue-200">$<%= cell.data["points"] %></div>
+                            </div>
+                          <% "video" -> %>
+                            <div class="flex flex-col items-center h-full justify-between">
+                              <div class="w-full h-16 flex items-center justify-center">
+                                <.icon name="hero-video-camera" class="h-8 w-8 text-blue-200"/>
+                              </div>
+                              <div class="font-medium text-xs text-center px-2">
+                                <%= truncate_text(cell.data["question"], 15) %>
+                              </div>
+                              <div class="text-sm font-semibold text-blue-200">$<%= cell.data["points"] %></div>
+                            </div>
+                          <% _ -> %>
+                            <div class="flex flex-col items-center h-full justify-between">
+                              <div class="font-medium text-sm text-center px-2">
+                                <%= truncate_text(cell.data["question"], 15) %>
+                              </div>
+                              <div class="text-sm font-semibold text-blue-200">$<%= cell.data["points"] %></div>
+                            </div>
+                        <% end %>
+                      <% else %>
+                        <div class="text-3xl font-bold">$<%= cell.data["points"] || get_points(row) %></div>
+                      <% end %>
+                    </div>
+                  <% end %>
+                  <div class="absolute bottom-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
+                    <.button 
+                      phx-click="edit_cell" 
+                      phx-value-id={cell.id} 
+                      class="!p-1.5 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm"
+                    >
+                      <.icon name="hero-pencil" class="h-4 w-4"/>
+                    </.button>
+                    <.button 
+                      phx-click="delete_cell"
+                      phx-value-id={cell.id}
+                      data-confirm="Are you sure you want to delete this cell?"
+                      class="!p-1.5 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm"
+                    >
+                      <.icon name="hero-trash" class="h-4 w-4"/>
+                    </.button>
+                  </div>
+                </div>
+              </div>
+            <% else %>
+              <%= if row == 1 do %>
+                <div class="w-full h-32 rounded-xl shadow-lg bg-gradient-to-br from-blue-700 to-blue-900 overflow-hidden group transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1">
+                  <.form for={%{}} phx-submit="save_category" class="relative w-full h-full">
+                    <input type="hidden" name="phx-value-col" value={col} />
+                    <input 
+                      type="text" 
+                      name="category" 
+                      class="absolute inset-0 bg-transparent text-white text-center text-lg font-bold tracking-wide focus:outline-none focus:bg-black/10 transition-all duration-300 placeholder:text-blue-200/70"
+                      placeholder="Enter category..."
+                      autocomplete="off"
+                    />
+                  </.form>
+                </div>
+              <% else %>
+                <div class="w-full h-32">
+                  <.button 
+                    class="w-full h-full rounded-xl shadow-lg bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 flex flex-col items-center justify-center gap-3" 
+                    phx-click="open_cell_modal" 
+                    phx-value-row={row} 
+                    phx-value-col={col}
+                  >
+                    <div class="text-3xl font-bold text-white">$<%= get_points(row) %></div>
+                    <.icon name="hero-plus" class="h-5 w-5 text-blue-200"/>
+                  </.button>
+                </div>
+              <% end %>
+            <% end %>
+          </td>
+        <% end %>
+      </tr>
+    <% end %>
+  </table>
+</div>
+
+<.back navigate={~p"/game_grids"}>Back to game_grids</.back>
+
+<.modal :if={@live_action == :edit} id="game_grid-modal" show on_cancel={JS.patch(~p"/game_grids/#{@game_grid}")}>
+  <.live_component
+    module={JeopartyWeb.GameGridLive.FormComponent}
+    id={@game_grid.id}
+    title={@page_title}
+    action={@live_action}
+    game_grid={@game_grid}
+    patch={~p"/game_grids/#{@game_grid}"}
+    current_user={@current_user}
+  />
+</.modal>
+
+<.modal 
+  :if={@show_cell_modal} 
+  id="cell-modal" 
+  show 
+  on_cancel={JS.push("modal-closed") |> JS.patch(~p"/game_grids/#{@game_grid}")}
+>
+  <.live_component
+    module={JeopartyWeb.GameGridLive.CellFormComponent}
+    id="new-cell"
+    cell={%Cell{}}
+    row={@selected_row}
+    column={@selected_column}
+    game_grid_id={@game_grid.id}
+    patch={~p"/game_grids/#{@game_grid}"}
+    editing_cell={@editing_cell}
+    points={@points}
+  />
+</.modal>
