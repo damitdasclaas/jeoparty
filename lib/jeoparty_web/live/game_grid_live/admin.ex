@@ -18,7 +18,20 @@ defmodule JeopartyWeb.GameGridLive.Admin do
      |> assign(:cells, cells)
      |> assign(:revealed_cells, MapSet.new())
      |> assign(:viewed_cell_id, nil)
+     |> assign(:show_cell_details, false)
+     |> assign(:selected_cell, nil)
      |> assign(:page_title, "Admin View - #{game_grid.name}")}
+  end
+
+  @impl true
+  def handle_event("show_cell_details", %{"id" => cell_id}, socket) do
+    cell = Enum.find(socket.assigns.cells, &(&1.id == cell_id))
+    {:noreply, socket |> assign(:show_cell_details, true) |> assign(:selected_cell, cell)}
+  end
+
+  @impl true
+  def handle_event("close_modal", _, socket) do
+    {:noreply, socket |> assign(:show_cell_details, false) |> assign(:selected_cell, nil)}
   end
 
   @impl true
