@@ -1,9 +1,7 @@
 defmodule JeopartyWeb.PageController do
   use JeopartyWeb, :controller
 
-  def home(conn, _params) do
-    # The home page is often custom made,
-    # so skip the default app layout.
-    render(conn, :home, layout: false)
+  def redirect_to_game_grids(conn, _params) do
+    redirect(conn, to: ~p"/game_grids")
   end
 end

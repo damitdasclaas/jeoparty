@@ -19,8 +19,7 @@ defmodule JeopartyWeb.Router do
 
   scope "/", JeopartyWeb do
     pipe_through :browser
-
-    get "/", PageController, :home
+    get "/", PageController, :redirect_to_game_grids
   end
 
   # Other scopes may use custom stacks.
@@ -66,15 +65,14 @@ defmodule JeopartyWeb.Router do
 
     live_session :require_authenticated_user,
       on_mount: [{JeopartyWeb.UserAuth, :ensure_authenticated}] do
-      live "/users/settings", UserSettingsLive, :edit
-      live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
-
       live "/game_grids", GameGridLive.Index, :index
       live "/game_grids/new", GameGridLive.Index, :new
       live "/game_grids/:id/edit", GameGridLive.Index, :edit
-
       live "/game_grids/:id", GameGridLive.Show, :show
       live "/game_grids/:id/show/edit", GameGridLive.Show, :edit
+
+      live "/users/settings", UserSettingsLive, :edit
+      live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
     end
   end
 

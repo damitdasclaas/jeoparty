@@ -45,27 +45,6 @@ defmodule JeopartyWeb.GameGridLive.Show do
   end
 
   @impl true
-  def handle_info({JeopartyWeb.GameGridLive.FormComponent, {:saved, game_grid}}, socket) do
-    {:noreply,
-     socket
-     |> assign(:game_grid, game_grid)
-     |> assign(:cells, GameGrids.get_cells_for_grid(game_grid.id))
-     |> put_flash(:info, "Game grid updated successfully")}
-  end
-
-  @impl true
-  def handle_info({:cell_created}, socket) do
-    {:noreply,
-     socket
-     |> assign(:show_cell_modal, false)
-     |> assign(:selected_row, nil)
-     |> assign(:selected_column, nil)
-     |> assign(:editing_cell, nil)
-     |> assign(:points, nil)
-     |> assign(:cells, GameGrids.get_cells_for_grid(socket.assigns.game_grid.id))}
-  end
-
-  @impl true
   def handle_event("delete_cell", %{"id" => id}, socket) do
     cell = Enum.find(socket.assigns.cells, &(&1.id == id))
     {:ok, _} = GameGrids.delete_cell(cell)
@@ -122,6 +101,27 @@ defmodule JeopartyWeb.GameGridLive.Show do
      |> assign(:points, nil)}
   end
 
+  @impl true
+  def handle_info({JeopartyWeb.GameGridLive.FormComponent, {:saved, game_grid}}, socket) do
+    {:noreply,
+     socket
+     |> assign(:game_grid, game_grid)
+     |> assign(:cells, GameGrids.get_cells_for_grid(game_grid.id))
+     |> put_flash(:info, "Game grid updated successfully")}
+  end
+
+  @impl true
+  def handle_info({:cell_created}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_cell_modal, false)
+     |> assign(:selected_row, nil)
+     |> assign(:selected_column, nil)
+     |> assign(:editing_cell, nil)
+     |> assign(:points, nil)
+     |> assign(:cells, GameGrids.get_cells_for_grid(socket.assigns.game_grid.id))}
+  end
+
   defp page_title(:show), do: "Show Game grid"
   defp page_title(:edit), do: "Edit Game grid"
 
@@ -138,7 +138,7 @@ defmodule JeopartyWeb.GameGridLive.Show do
     if row > 1, do: (row - 1) * 100, else: nil
   end
 
-  defp truncate_text(text, length \\ 30) do
+  defp truncate_text(text, length \\ 15) do
     if String.length(text) > length do
       String.slice(text, 0, length) <> "..."
     else
