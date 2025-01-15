@@ -8,9 +8,9 @@
           <td class="p-2" style={"min-width: 200px; width: #{100/@game_grid.columns}%"}>
             <%= if cell = Enum.find(@cells, &(&1.row == row && &1.column == col)) do %>
               <div class={[
-                "w-full h-32 rounded-xl shadow-lg relative group transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 cursor-pointer",
-                cell.is_category && "bg-gradient-to-br from-blue-700 to-blue-900 text-white" || 
-                "bg-gradient-to-br from-blue-500 to-blue-700 text-white"
+                "w-full h-32 rounded-xl shadow-lg relative",
+                cell.is_category && "h-24 bg-gradient-to-br from-indigo-700 to-indigo-900 text-white" || 
+                "bg-gradient-to-br from-blue-500 to-blue-700 text-white group transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1"
               ]}
                    phx-click="select_cell"
                    phx-value-id={cell.id}>
