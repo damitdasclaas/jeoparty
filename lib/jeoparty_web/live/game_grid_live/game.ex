@@ -26,8 +26,14 @@ defmodule JeopartyWeb.GameGridLive.Game do
   def handle_event("select_cell", %{"id" => cell_id}, socket) do
     cell = Enum.find(socket.assigns.cells, &(&1.id == cell_id))
 
+    # Don't handle category cells
     if not cell.is_category do
-      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:cell_selected, cell})
+      # First broadcast the preview
+      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:preview_cell, cell})
+
+      # Then reveal the cell
+      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:reveal_cell, cell})
+
       {:noreply, socket |> assign(:selected_cell, cell) |> assign(:show_modal, true)}
     else
       {:noreply, socket}
@@ -35,7 +41,17 @@ defmodule JeopartyWeb.GameGridLive.Game do
   end
 
   @impl true
-  def handle_event("close_modal", _, socket) do
+  def handle_event("close_modal", _params, socket) do
+    if socket.assigns.selected_cell do
+      # Close the preview
+      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:close_preview, nil})
+
+      # Hide the cell unless it was explicitly revealed
+      unless MapSet.member?(socket.assigns.revealed_cells, socket.assigns.selected_cell.id) do
+        PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:hide_cell, socket.assigns.selected_cell})
+      end
+    end
+
     {:noreply, socket |> assign(:show_modal, false) |> assign(:selected_cell, nil)}
   end
 
