@@ -70,23 +70,37 @@ defmodule JeopartyWeb.GameGridLive.Show do
   end
 
   @impl true
-  def handle_event("save_category", %{"category" => category, "phx-value-col" => col}, socket) do
-    attrs = %{
-      row: 1,
-      column: String.to_integer(col),
-      game_grid_id: socket.assigns.game_grid.id,
-      data: %{"question" => category}
-    }
+  def handle_event("update_category", %{"value" => category, "col" => col}, socket) do
+    if String.trim(category) == "" do
+      {:noreply, socket}
+    else
+      cell_params = %{
+        "row" => 1,
+        "column" => String.to_integer(col),
+        "data" => %{"question" => category},
+        "game_grid_id" => socket.assigns.game_grid.id,
+        "is_category" => true,
+        "type" => "text"
+      }
 
-    case GameGrids.create_cell(attrs) do
-      {:ok, _cell} ->
-        {:noreply,
-         socket
-         |> assign(:cells, GameGrids.get_cells_for_grid(socket.assigns.game_grid.id))
-         |> put_flash(:info, "Category added successfully")}
+      case get_cell(socket.assigns.cells, 1, String.to_integer(col)) do
+        nil ->
+          {:ok, cell} = GameGrids.create_cell(cell_params)
+          {:noreply,
+           socket
+           |> assign(:cells, [cell | socket.assigns.cells])
+           |> put_flash(:info, "Category added")}
 
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Could not add category")}
+        existing_cell ->
+          {:ok, updated_cell} = GameGrids.update_cell(existing_cell, %{data: %{"question" => category}})
+          updated_cells = Enum.map(socket.assigns.cells, fn cell ->
+            if cell.id == existing_cell.id, do: updated_cell, else: cell
+          end)
+          {:noreply,
+           socket
+           |> assign(:cells, updated_cells)
+           |> put_flash(:info, "Category updated")}
+      end
     end
   end
 
@@ -143,6 +157,38 @@ defmodule JeopartyWeb.GameGridLive.Show do
       String.slice(text, 0, length) <> "..."
     else
       text
+    end
+  end
+
+  def handle_event("delete_category", %{"id" => id}, socket) do
+    cell = Enum.find(socket.assigns.cells, &(&1.id == id))
+    {:ok, _} = GameGrids.delete_cell(cell)
+
+    {:noreply,
+     socket
+     |> assign(:cells, GameGrids.get_cells_for_grid(socket.assigns.game_grid.id))
+     |> put_flash(:info, "Category deleted")}
+  end
+
+  @impl true
+  def handle_event("handle_category_keyup", %{"key" => key, "target" => %{"value" => value}, "phx-value-col" => col}, socket) do
+    if key == "Enter" and String.trim(value) != "" do
+      handle_event("update_category", %{"value" => value, "col" => col}, socket)
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("handle_category_keyup", _params, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("save_category", %{"category" => category, "col" => col}, socket) do
+    if String.trim(category) != "" do
+      handle_event("update_category", %{"value" => category, "col" => col}, socket)
+    else
+      {:noreply, socket}
     end
   end
 end
