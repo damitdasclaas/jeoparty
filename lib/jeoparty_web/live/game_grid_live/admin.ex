@@ -50,20 +50,11 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     if socket.assigns.viewed_cell_id == cell_id do
       # If this cell is already being viewed, close it
       PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:close_preview, nil})
-
-      # If the cell was revealed, keep it revealed
-      unless MapSet.member?(socket.assigns.revealed_cells, cell_id) do
-        PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:hide_cell, cell})
-      end
-
       {:noreply, socket |> assign(:viewed_cell_id, nil)}
     else
       # Show the new cell
-      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:preview_cell, cell})
-
-      # Always reveal the cell when viewing it
       PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:reveal_cell, cell})
-
+      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:preview_cell, cell})
       {:noreply, socket |> assign(:viewed_cell_id, cell_id)}
     end
   end
@@ -89,12 +80,21 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   end
 
   @impl true
-  def handle_info({:preview_cell, cell}, socket) do
-    {:noreply, socket |> assign(:viewed_cell_id, cell.id)}
+  def handle_info({:preview_cell, _cell}, socket) do
+    {:noreply, socket}
   end
 
   @impl true
   def handle_info({:close_preview, _}, socket) do
-    {:noreply, socket |> assign(:viewed_cell_id, nil)}
+    {:noreply, socket}
+  end
+
+  defp get_cell(cells, row, col) do
+    row = if is_binary(row), do: String.to_integer(row), else: row
+    col = if is_binary(col), do: String.to_integer(col), else: col
+
+    Enum.find(cells, fn cell ->
+      cell.row == row && cell.column == col
+    end)
   end
 end

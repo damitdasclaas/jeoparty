@@ -15,7 +15,7 @@
           <td class="p-2" style={"min-width: 200px; width: #{100/@game_grid.columns}%"}>
             <%= if row == 1 do %>
               <%= if cell = get_cell(@cells, 1, col) do %>
-                <div class="w-full h-24 rounded-xl shadow-lg relative group">
+                <div class="w-full h-24 rounded-xl shadow-lg relative group overflow-hidden">
                   <div class="absolute inset-0 bg-gradient-to-br from-indigo-700 to-indigo-900 text-white rounded-xl">
                     <form phx-submit="save_category" class="w-full h-full">
                       <input 
@@ -24,7 +24,7 @@
                         value={cell.data["question"]}
                         phx-blur="update_category"
                         phx-value-col={col}
-                        class="w-full h-full bg-transparent text-white text-center text-lg font-bold tracking-wide focus:outline-none focus:bg-black/10 transition-all duration-300 border-none rounded-xl"
+                        class="w-full h-full bg-transparent text-white text-center text-lg font-bold tracking-wide focus:outline-none focus:bg-black/10 transition-all duration-300 border-none"
                         autocomplete="off"
                       />
                       <input type="hidden" name="col" value={col} />
