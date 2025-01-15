@@ -61,8 +61,10 @@ defmodule JeopartyWeb.GameGridLive.Admin do
 
   @impl true
   def handle_info({:cell_selected, cell}, socket) do
-    PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:reveal_cell, cell})
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign(:revealed_cells, MapSet.put(socket.assigns.revealed_cells, cell.id))
+     |> assign(:viewed_cell_id, cell.id)}
   end
 
   @impl true
@@ -87,6 +89,11 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   @impl true
   def handle_info({:close_preview, _}, socket) do
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:view_toggled, cell}, socket) do
+    {:noreply, socket |> assign(:viewed_cell_id, cell && cell.id)}
   end
 
   defp get_cell(cells, row, col) do

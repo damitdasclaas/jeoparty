@@ -28,6 +28,7 @@ defmodule JeopartyWeb.GameGridLive.Game do
 
     if not cell.is_category do
       PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:cell_selected, cell})
+      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:view_toggled, cell})
       {:noreply, socket |> assign(:selected_cell, cell) |> assign(:show_modal, true)}
     else
       {:noreply, socket}
@@ -36,6 +37,10 @@ defmodule JeopartyWeb.GameGridLive.Game do
 
   @impl true
   def handle_event("close_modal", _, socket) do
+    if socket.assigns.selected_cell do
+      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:view_toggled, nil})
+      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:reveal_cell, socket.assigns.selected_cell})
+    end
     {:noreply, socket |> assign(:show_modal, false) |> assign(:selected_cell, nil)}
   end
 
@@ -66,6 +71,11 @@ defmodule JeopartyWeb.GameGridLive.Game do
   @impl true
   def handle_info({:close_preview, _}, socket) do
     {:noreply, socket |> assign(:show_modal, false) |> assign(:selected_cell, nil)}
+  end
+
+  @impl true
+  def handle_info({:view_toggled, _cell}, socket) do
+    {:noreply, socket}
   end
 
   defp get_cell(cells, row, col) do
