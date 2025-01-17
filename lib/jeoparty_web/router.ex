@@ -70,6 +70,8 @@ defmodule JeopartyWeb.Router do
       live "/game_grids/:id/edit", GameGridLive.Index, :edit
       live "/game_grids/:id", GameGridLive.Show, :show
       live "/game_grids/:id/show/edit", GameGridLive.Show, :edit
+      live "/game_grids/:id/admin", GameGridLive.Admin, :show
+      live "/game_grids/:id/game", GameGridLive.Game, :show
 
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email

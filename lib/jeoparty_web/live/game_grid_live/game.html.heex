@@ -1,0 +1,112 @@
+<div class="container mx-auto px-4">
+  <h1 class="text-2xl font-bold mb-4">Game View - <%= @game_grid.name %></h1>
+  
+  <table class="w-full border-collapse">
+    <%= for row <- 1..@game_grid.rows do %>
+      <tr>
+        <%= for col <- 1..@game_grid.columns do %>
+          <%= if row == 1 do %>
+            <td class="p-2" style={"min-width: 200px; width: #{100/@game_grid.columns}%"}>
+              <%= if cell = get_cell(@cells, 1, col) do %>
+                <div class="w-full h-24 rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
+                  <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-lg tracking-wide">
+                    <%= cell.data["question"] %>
+                  </div>
+                </div>
+              <% else %>
+                <div class="w-full h-24 rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
+                  <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-lg tracking-wide text-white/50">
+                    No category given
+                  </div>
+                </div>
+              <% end %>
+            </td>
+          <% else %>
+            <td class="p-2" style={"min-width: 200px; width: #{100/@game_grid.columns}%"}>
+              <%= if cell = Enum.find(@cells, &(&1.row == row && &1.column == col)) do %>
+                <div class={[
+                  "w-full h-32 rounded-xl shadow-lg relative",
+                  cell.is_category && "h-24 bg-gradient-to-br from-indigo-700 to-indigo-900 text-white" || 
+                  "bg-gradient-to-br from-blue-500 to-blue-700 text-white group transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1"
+                ]}
+                     phx-click="select_cell"
+                     phx-value-id={cell.id}>
+                  <div class="absolute inset-0 flex flex-col p-4">
+                    <%= if cell.is_category do %>
+                      <div class="flex-grow flex items-center justify-center text-center font-bold text-lg tracking-wide">
+                        <%= cell.data["question"] %>
+                      </div>
+                    <% else %>
+                      <div class="flex-grow flex flex-col items-center justify-center text-center">
+                        <%= if MapSet.member?(@revealed_cells, cell.id) do %>
+                          <div class="font-medium text-sm text-center px-2">
+                            <%= cell.data["question"] %>
+                          </div>
+                        <% else %>
+                          <div class="text-3xl font-bold">$<%= cell.data["points"] || (cell.row - 1) * 100 %></div>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% else %>
+                <div class="w-full h-32 rounded-xl shadow-lg relative bg-gradient-to-br from-gray-500 to-gray-700 text-white opacity-50">
+                  <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                    <div class="text-3xl font-bold">$<%= (row - 1) * 100 %></div>
+                  </div>
+                </div>
+              <% end %>
+            </td>
+          <% end %>
+        <% end %>
+      </tr>
+    <% end %>
+  </table>
+
+  <%= if @show_modal && @selected_cell do %>
+    <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+         phx-click="close_modal">
+      <div class="bg-gradient-to-br from-blue-500 to-blue-700 p-12 rounded-xl shadow-2xl w-[90vw] h-[80vh] mx-4 text-white transform transition-all duration-300 scale-100"
+           phx-click-away="close_modal">
+        <div class="flex flex-col items-center justify-center h-full space-y-8">
+          <%= case @selected_cell.type do %>
+            <% "picture" -> %>
+              <%= if @selected_cell.data["image_url"] do %>
+                <img src={@selected_cell.data["image_url"]} 
+                     alt={@selected_cell.data["question"]} 
+                     class="max-h-[50vh] object-contain rounded-lg" />
+              <% end %>
+              <div class="text-4xl font-bold text-center">
+                <%= @selected_cell.data["question"] %>
+              </div>
+            <% "video" -> %>
+              <%= if @selected_cell.data["video_url"] do %>
+                <div class="w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden">
+                  <iframe 
+                    src={@selected_cell.data["video_url"]}
+                    class="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                  ></iframe>
+                </div>
+              <% else %>
+                <div class="w-full max-w-4xl aspect-video bg-black/20 rounded-lg flex items-center justify-center">
+                  <.icon name="hero-video-camera" class="h-32 w-32 text-white/60"/>
+                </div>
+              <% end %>
+              <div class="text-4xl font-bold text-center">
+                <%= @selected_cell.data["question"] %>
+              </div>
+            <% _ -> %>
+              <div class="text-6xl font-bold text-center leading-tight">
+                <%= @selected_cell.data["question"] %>
+              </div>
+          <% end %>
+          <div class="text-3xl font-semibold text-blue-200">
+            $<%= @selected_cell.data["points"] || (@selected_cell.row - 1) * 100 %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

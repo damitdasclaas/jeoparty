@@ -131,4 +131,34 @@ defmodule Jeoparty.GameGrids do
     |> Cell.changeset(attrs)
     |> Repo.insert()
   end
+
+  @doc """
+  Reveals a cell in the game grid.
+  """
+  def reveal_cell(%GameGrid{} = game_grid, cell_id) do
+    new_revealed_cells = [cell_id | (game_grid.revealed_cell_ids || [])] |> Enum.uniq()
+    update_game_grid(game_grid, %{revealed_cell_ids: new_revealed_cells})
+  end
+
+  @doc """
+  Hides a cell in the game grid.
+  """
+  def hide_cell(%GameGrid{} = game_grid, cell_id) do
+    new_revealed_cells = (game_grid.revealed_cell_ids || []) |> Enum.reject(&(&1 == cell_id))
+    update_game_grid(game_grid, %{revealed_cell_ids: new_revealed_cells})
+  end
+
+  @doc """
+  Sets the currently viewed cell.
+  """
+  def set_viewed_cell(%GameGrid{} = game_grid, cell_id) do
+    update_game_grid(game_grid, %{viewed_cell_id: cell_id})
+  end
+
+  @doc """
+  Hides all cells in the game grid.
+  """
+  def hide_all_cells(%GameGrid{} = game_grid) do
+    update_game_grid(game_grid, %{revealed_cell_ids: [], viewed_cell_id: nil})
+  end
 end

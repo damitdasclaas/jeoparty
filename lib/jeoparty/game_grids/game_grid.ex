@@ -8,6 +8,8 @@ defmodule Jeoparty.GameGrids.GameGrid do
     field :name, :string
     field :columns, :integer, default: 4
     field :rows, :integer, default: 3
+    field :revealed_cell_ids, {:array, :string}, default: []
+    field :viewed_cell_id, :string
 
     belongs_to :user, Jeoparty.Accounts.User, foreign_key: :created_by
     has_many :cells, Jeoparty.Question.Cell, on_delete: :delete_all
@@ -18,7 +20,7 @@ defmodule Jeoparty.GameGrids.GameGrid do
   @doc false
   def changeset(game_grid, attrs) do
     game_grid
-    |> cast(attrs, [:name, :columns, :rows, :created_by])
+    |> cast(attrs, [:name, :columns, :rows, :created_by, :revealed_cell_ids, :viewed_cell_id])
     |> validate_required([:name, :columns, :rows, :created_by])
   end
 end

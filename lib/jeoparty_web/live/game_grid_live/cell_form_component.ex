@@ -69,6 +69,18 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
           <% end %>
 
           <.input
+            field={@form[:answer]}
+            type="text"
+            label="Answer"
+          />
+          <.input
+            field={@form[:answer_source_url]}
+            type="text"
+            label="Answer Source URL (optional)"
+            placeholder="URL to verify the answer"
+          />
+
+          <.input
             field={@form[:points]}
             type="number"
             label="Points"
@@ -104,7 +116,9 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         "question" => assigns.editing_cell.data["question"],
         "points" => assigns.editing_cell.data["points"],
         "image_url" => assigns.editing_cell.data["image_url"],
-        "video_url" => assigns.editing_cell.data["video_url"]
+        "video_url" => assigns.editing_cell.data["video_url"],
+        "answer" => assigns.editing_cell.data["answer"],
+        "answer_source_url" => assigns.editing_cell.data["answer_source_url"]
       }
     else
       %{
@@ -112,7 +126,9 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         "question" => "",
         "points" => assigns[:points],
         "image_url" => "",
-        "video_url" => ""
+        "video_url" => "",
+        "answer" => "",
+        "answer_source_url" => ""
       }
     end
 
@@ -148,7 +164,9 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         "question" => params["question"],
         "points" => if(params["points"] == "", do: nil, else: params["points"]),
         "image_url" => params["image_url"],
-        "video_url" => params["video_url"]
+        "video_url" => params["video_url"],
+        "answer" => params["answer"],
+        "answer_source_url" => params["answer_source_url"]
       }
     }
 

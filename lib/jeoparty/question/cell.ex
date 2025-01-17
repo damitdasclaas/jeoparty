@@ -24,9 +24,42 @@ defmodule Jeoparty.Question.Cell do
     |> validate_required([:row, :column, :game_grid_id])
     |> validate_inclusion(:type, @cell_types)
     |> maybe_set_category()
+    |> transform_video_url()
     |> unique_constraint([:game_grid_id, :row, :column],
       name: :question_cells_position_index,
       message: "A cell already exists at this position")
+  end
+
+  defp transform_video_url(changeset) do
+    if get_field(changeset, :type) == "video" do
+      case get_change(changeset, :data) do
+        %{"video_url" => url} when is_binary(url) ->
+          data = get_change(changeset, :data)
+          put_change(changeset, :data, %{data | "video_url" => youtube_url_to_embed(url)})
+        _ -> changeset
+      end
+    else
+      changeset
+    end
+  end
+
+  defp youtube_url_to_embed(url) do
+    cond do
+      # Handle youtube.com/watch?v= URLs
+      video_id = Regex.run(~r/youtube\.com\/watch\?v=([^&]+)/, url) ->
+        "https://www.youtube.com/embed/#{Enum.at(video_id, 1)}"
+
+      # Handle youtu.be/ URLs
+      video_id = Regex.run(~r/youtu\.be\/([^?]+)/, url) ->
+        "https://www.youtube.com/embed/#{Enum.at(video_id, 1)}"
+
+      # Handle youtube.com/embed/ URLs (already in correct format)
+      Regex.match?(~r/youtube\.com\/embed\//, url) ->
+        url
+
+      # Return original URL if no match (might be another video platform)
+      true -> url
+    end
   end
 
   def types, do: @cell_types
