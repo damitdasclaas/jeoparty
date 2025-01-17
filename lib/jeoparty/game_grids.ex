@@ -161,4 +161,8 @@ defmodule Jeoparty.GameGrids do
   def hide_all_cells(%GameGrid{} = game_grid) do
     update_game_grid(game_grid, %{revealed_cell_ids: [], viewed_cell_id: nil})
   end
+
+  def list_cells(game_grid) do
+    Repo.all(from c in Cell, where: c.game_grid_id == ^game_grid.id)
+  end
 end

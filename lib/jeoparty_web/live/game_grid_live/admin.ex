@@ -1,45 +1,86 @@
 defmodule JeopartyWeb.GameGridLive.Admin do
   use JeopartyWeb, :live_view
-  alias Jeoparty.GameGrids
+  import Ecto.Query
   alias Phoenix.PubSub
 
+  alias Jeoparty.GameGrids
+  alias Jeoparty.Games.Team
+  alias Jeoparty.Repo
+
   @impl true
-  def mount(%{"id" => grid_id}, _session, socket) do
+  def mount(%{"id" => id}, _session, socket) do
     if connected?(socket) do
-      PubSub.subscribe(Jeoparty.PubSub, "game_grid:#{grid_id}")
+      PubSub.subscribe(Jeoparty.PubSub, "game_grid:#{id}")
     end
 
-    game_grid = GameGrids.get_game_grid!(grid_id)
-    cells = GameGrids.get_cells_for_grid(grid_id)
+    game_grid = GameGrids.get_game_grid!(id)
+    cells = GameGrids.list_cells(game_grid)
+    teams = Repo.all(from(t in Team, where: t.game_grid_id == ^game_grid.id, select: t))
 
     {:ok,
      socket
      |> assign(:game_grid, game_grid)
      |> assign(:cells, cells)
+     |> assign(:teams, teams)
      |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids || []))
      |> assign(:viewed_cell_id, game_grid.viewed_cell_id)
      |> assign(:show_cell_details, false)
-     |> assign(:selected_cell, nil)
-     |> assign(:page_title, "Admin View - #{game_grid.name}")}
+     |> assign(:selected_cell, nil)}
   end
 
   @impl true
-  def handle_event("show_cell_details", %{"id" => cell_id}, socket) do
-    cell = Enum.find(socket.assigns.cells, &(&1.id == cell_id))
-    {:noreply, socket |> assign(:show_cell_details, true) |> assign(:selected_cell, cell)}
+  def handle_event("add_team", _params, socket) do
+    team_count = length(socket.assigns.teams) + 1
+    team_name = "Team #{team_count}"
+
+    {:ok, team} =
+      %Team{}
+      |> Team.changeset(%{
+        name: team_name,
+        game_grid_id: socket.assigns.game_grid.id
+      })
+      |> Repo.insert()
+
+    {:noreply, assign(socket, :teams, socket.assigns.teams ++ [team])}
   end
 
   @impl true
-  def handle_event("close_modal", _, socket) do
-    {:noreply, socket |> assign(:show_cell_details, false) |> assign(:selected_cell, nil)}
+  def handle_event("remove_team", %{"id" => id}, socket) do
+    team = Enum.find(socket.assigns.teams, &(&1.id == String.to_integer(id)))
+    {:ok, _} = Repo.delete(team)
+
+    {:noreply,
+     assign(socket, :teams, Enum.reject(socket.assigns.teams, &(&1.id == team.id)))}
   end
 
   @impl true
-  def handle_event("reveal_cell", %{"id" => cell_id}, socket) do
-    cell = Enum.find(socket.assigns.cells, &(&1.id == cell_id))
-    {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell_id)
+  def handle_event("adjust_score", %{"team_id" => team_id, "amount" => amount}, socket) do
+    team = Enum.find(socket.assigns.teams, &(&1.id == String.to_integer(team_id)))
+    amount = String.to_integer(amount)
 
-    PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:reveal_cell, cell})
+    {:ok, updated_team} =
+      team
+      |> Team.changeset(%{score: team.score + amount})
+      |> Repo.update()
+
+    updated_teams =
+      Enum.map(socket.assigns.teams, fn t ->
+        if t.id == team.id, do: updated_team, else: t
+      end)
+
+    {:noreply, assign(socket, :teams, updated_teams)}
+  end
+
+  @impl true
+  def handle_event("reveal_cell", %{"id" => id}, socket) do
+    cell = Enum.find(socket.assigns.cells, &(&1.id == id))
+    {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, id)
+
+    PubSub.broadcast(
+      Jeoparty.PubSub,
+      "game_grid:#{socket.assigns.game_grid.id}",
+      {:reveal_cell, cell}
+    )
 
     {:noreply,
      socket
@@ -48,11 +89,15 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   end
 
   @impl true
-  def handle_event("hide_cell", %{"id" => cell_id}, socket) do
-    cell = Enum.find(socket.assigns.cells, &(&1.id == cell_id))
-    {:ok, game_grid} = GameGrids.hide_cell(socket.assigns.game_grid, cell_id)
+  def handle_event("hide_cell", %{"id" => id}, socket) do
+    cell = Enum.find(socket.assigns.cells, &(&1.id == id))
+    {:ok, game_grid} = GameGrids.hide_cell(socket.assigns.game_grid, id)
 
-    PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:hide_cell, cell})
+    PubSub.broadcast(
+      Jeoparty.PubSub,
+      "game_grid:#{socket.assigns.game_grid.id}",
+      {:hide_cell, cell}
+    )
 
     {:noreply,
      socket
@@ -65,7 +110,11 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     {:ok, game_grid} = GameGrids.hide_all_cells(socket.assigns.game_grid)
 
     Enum.each(socket.assigns.cells, fn cell ->
-      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:hide_cell, cell})
+      PubSub.broadcast(
+        Jeoparty.PubSub,
+        "game_grid:#{socket.assigns.game_grid.id}",
+        {:hide_cell, cell}
+      )
     end)
 
     {:noreply,
@@ -76,33 +125,18 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   end
 
   @impl true
-  def handle_event("reset_game", _params, socket) do
-    # First hide all cells
-    {:ok, game_grid} = GameGrids.hide_all_cells(socket.assigns.game_grid)
+  def handle_event("view_cell", %{"id" => id}, socket) do
+    cell = Enum.find(socket.assigns.cells, &(&1.id == id))
 
-    # Broadcast reset event to all clients
-    PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", :reset_game)
-
-    # Close any open previews
-    PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:close_preview, nil})
-
-    {:noreply,
-     socket
-     |> assign(:game_grid, game_grid)
-     |> assign(:revealed_cells, MapSet.new())
-     |> assign(:viewed_cell_id, nil)
-     |> assign(:show_cell_details, false)
-     |> assign(:selected_cell, nil)}
-  end
-
-  @impl true
-  def handle_event("view_cell", %{"id" => cell_id}, socket) do
-    cell = Enum.find(socket.assigns.cells, &(&1.id == cell_id))
-
-    if socket.assigns.viewed_cell_id == cell_id do
+    if socket.assigns.viewed_cell_id == id do
       # If this cell is already being viewed, close it
       {:ok, game_grid} = GameGrids.set_viewed_cell(socket.assigns.game_grid, nil)
-      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:close_preview, nil})
+
+      PubSub.broadcast(
+        Jeoparty.PubSub,
+        "game_grid:#{socket.assigns.game_grid.id}",
+        {:close_preview, nil}
+      )
 
       {:noreply,
        socket
@@ -110,18 +144,45 @@ defmodule JeopartyWeb.GameGridLive.Admin do
        |> assign(:viewed_cell_id, nil)}
     else
       # Show the new cell
-      {:ok, game_grid} = GameGrids.set_viewed_cell(socket.assigns.game_grid, cell_id)
-      {:ok, game_grid} = GameGrids.reveal_cell(game_grid, cell_id)
+      {:ok, game_grid} = GameGrids.set_viewed_cell(socket.assigns.game_grid, id)
+      {:ok, game_grid} = GameGrids.reveal_cell(game_grid, id)
 
-      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:reveal_cell, cell})
-      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:preview_cell, cell})
+      PubSub.broadcast(
+        Jeoparty.PubSub,
+        "game_grid:#{socket.assigns.game_grid.id}",
+        {:reveal_cell, cell}
+      )
+
+      PubSub.broadcast(
+        Jeoparty.PubSub,
+        "game_grid:#{socket.assigns.game_grid.id}",
+        {:preview_cell, cell}
+      )
 
       {:noreply,
        socket
        |> assign(:game_grid, game_grid)
-       |> assign(:viewed_cell_id, cell_id)
+       |> assign(:viewed_cell_id, id)
        |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))}
     end
+  end
+
+  @impl true
+  def handle_event("show_cell_details", %{"id" => id}, socket) do
+    cell = Enum.find(socket.assigns.cells, &(&1.id == id))
+
+    {:noreply,
+     socket
+     |> assign(:selected_cell, cell)
+     |> assign(:show_cell_details, true)}
+  end
+
+  @impl true
+  def handle_event("close_modal", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:selected_cell, nil)
+     |> assign(:show_cell_details, false)}
   end
 
   @impl true
@@ -162,9 +223,6 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   end
 
   defp get_cell(cells, row, col) do
-    row = if is_binary(row), do: String.to_integer(row), else: row
-    col = if is_binary(col), do: String.to_integer(col), else: col
-
     Enum.find(cells, fn cell ->
       cell.row == row && cell.column == col
     end)
