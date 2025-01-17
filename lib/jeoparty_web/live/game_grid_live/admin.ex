@@ -16,8 +16,8 @@ defmodule JeopartyWeb.GameGridLive.Admin do
      socket
      |> assign(:game_grid, game_grid)
      |> assign(:cells, cells)
-     |> assign(:revealed_cells, MapSet.new())
-     |> assign(:viewed_cell_id, nil)
+     |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids || []))
+     |> assign(:viewed_cell_id, game_grid.viewed_cell_id)
      |> assign(:show_cell_details, false)
      |> assign(:selected_cell, nil)
      |> assign(:page_title, "Admin View - #{game_grid.name}")}
@@ -37,23 +37,62 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   @impl true
   def handle_event("reveal_cell", %{"id" => cell_id}, socket) do
     cell = Enum.find(socket.assigns.cells, &(&1.id == cell_id))
+    {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell_id)
+
     PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:reveal_cell, cell})
-    {:noreply, socket}
+
+    {:noreply,
+     socket
+     |> assign(:game_grid, game_grid)
+     |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))}
   end
 
   @impl true
   def handle_event("hide_cell", %{"id" => cell_id}, socket) do
     cell = Enum.find(socket.assigns.cells, &(&1.id == cell_id))
+    {:ok, game_grid} = GameGrids.hide_cell(socket.assigns.game_grid, cell_id)
+
     PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:hide_cell, cell})
-    {:noreply, socket}
+
+    {:noreply,
+     socket
+     |> assign(:game_grid, game_grid)
+     |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))}
   end
 
   @impl true
   def handle_event("hide_all", _params, socket) do
+    {:ok, game_grid} = GameGrids.hide_all_cells(socket.assigns.game_grid)
+
     Enum.each(socket.assigns.cells, fn cell ->
       PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:hide_cell, cell})
     end)
-    {:noreply, socket |> assign(:revealed_cells, MapSet.new())}
+
+    {:noreply,
+     socket
+     |> assign(:game_grid, game_grid)
+     |> assign(:revealed_cells, MapSet.new())
+     |> assign(:viewed_cell_id, nil)}
+  end
+
+  @impl true
+  def handle_event("reset_game", _params, socket) do
+    # First hide all cells
+    {:ok, game_grid} = GameGrids.hide_all_cells(socket.assigns.game_grid)
+
+    # Broadcast reset event to all clients
+    PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", :reset_game)
+
+    # Close any open previews
+    PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:close_preview, nil})
+
+    {:noreply,
+     socket
+     |> assign(:game_grid, game_grid)
+     |> assign(:revealed_cells, MapSet.new())
+     |> assign(:viewed_cell_id, nil)
+     |> assign(:show_cell_details, false)
+     |> assign(:selected_cell, nil)}
   end
 
   @impl true
@@ -62,13 +101,26 @@ defmodule JeopartyWeb.GameGridLive.Admin do
 
     if socket.assigns.viewed_cell_id == cell_id do
       # If this cell is already being viewed, close it
+      {:ok, game_grid} = GameGrids.set_viewed_cell(socket.assigns.game_grid, nil)
       PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:close_preview, nil})
-      {:noreply, socket |> assign(:viewed_cell_id, nil)}
+
+      {:noreply,
+       socket
+       |> assign(:game_grid, game_grid)
+       |> assign(:viewed_cell_id, nil)}
     else
       # Show the new cell
+      {:ok, game_grid} = GameGrids.set_viewed_cell(socket.assigns.game_grid, cell_id)
+      {:ok, game_grid} = GameGrids.reveal_cell(game_grid, cell_id)
+
       PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:reveal_cell, cell})
       PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:preview_cell, cell})
-      {:noreply, socket |> assign(:viewed_cell_id, cell_id)}
+
+      {:noreply,
+       socket
+       |> assign(:game_grid, game_grid)
+       |> assign(:viewed_cell_id, cell_id)
+       |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))}
     end
   end
 

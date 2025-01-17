@@ -16,9 +16,9 @@ defmodule JeopartyWeb.GameGridLive.Game do
      socket
      |> assign(:game_grid, game_grid)
      |> assign(:cells, cells)
-     |> assign(:revealed_cells, MapSet.new())
-     |> assign(:selected_cell, nil)
+     |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids || []))
      |> assign(:show_modal, false)
+     |> assign(:selected_cell, nil)
      |> assign(:page_title, "Game View - #{game_grid.name}")}
   end
 
@@ -26,10 +26,16 @@ defmodule JeopartyWeb.GameGridLive.Game do
   def handle_event("select_cell", %{"id" => cell_id}, socket) do
     cell = Enum.find(socket.assigns.cells, &(&1.id == cell_id))
 
-    if not cell.is_category do
+    if cell && !cell.is_category do
+      {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell_id)
       PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:cell_selected, cell})
-      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:view_toggled, cell})
-      {:noreply, socket |> assign(:selected_cell, cell) |> assign(:show_modal, true)}
+
+      {:noreply,
+       socket
+       |> assign(:game_grid, game_grid)
+       |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))
+       |> assign(:show_modal, true)
+       |> assign(:selected_cell, cell)}
     else
       {:noreply, socket}
     end
@@ -39,38 +45,70 @@ defmodule JeopartyWeb.GameGridLive.Game do
   def handle_event("close_modal", _, socket) do
     if socket.assigns.selected_cell do
       PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:view_toggled, nil})
-      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:reveal_cell, socket.assigns.selected_cell})
+      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:close_preview, nil})
     end
-    {:noreply, socket |> assign(:show_modal, false) |> assign(:selected_cell, nil)}
+
+    {:noreply,
+     socket
+     |> assign(:show_modal, false)
+     |> assign(:selected_cell, nil)}
   end
 
   @impl true
-  def handle_info({:cell_selected, _cell}, socket) do
-    {:noreply, socket}
+  def handle_info({:cell_selected, cell}, socket) do
+    {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell.id)
+
+    {:noreply,
+     socket
+     |> assign(:game_grid, game_grid)
+     |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))
+     |> assign(:show_modal, true)
+     |> assign(:selected_cell, cell)}
   end
 
   @impl true
   def handle_info({:reveal_cell, cell}, socket) do
+    {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell.id)
+
     {:noreply,
      socket
-     |> assign(:revealed_cells, MapSet.put(socket.assigns.revealed_cells, cell.id))}
+     |> assign(:game_grid, game_grid)
+     |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))}
   end
 
   @impl true
   def handle_info({:hide_cell, cell}, socket) do
+    {:ok, game_grid} = GameGrids.hide_cell(socket.assigns.game_grid, cell.id)
+
     {:noreply,
      socket
-     |> assign(:revealed_cells, MapSet.delete(socket.assigns.revealed_cells, cell.id))}
+     |> assign(:game_grid, game_grid)
+     |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))}
   end
 
   @impl true
   def handle_info({:preview_cell, cell}, socket) do
-    {:noreply, socket |> assign(:selected_cell, cell) |> assign(:show_modal, true)}
+    {:noreply,
+     socket
+     |> assign(:show_modal, true)
+     |> assign(:selected_cell, cell)}
   end
 
   @impl true
   def handle_info({:close_preview, _}, socket) do
-    {:noreply, socket |> assign(:show_modal, false) |> assign(:selected_cell, nil)}
+    {:noreply,
+     socket
+     |> assign(:show_modal, false)
+     |> assign(:selected_cell, nil)}
+  end
+
+  @impl true
+  def handle_info(:reset_game, socket) do
+    {:noreply,
+     socket
+     |> assign(:revealed_cells, MapSet.new())
+     |> assign(:show_modal, false)
+     |> assign(:selected_cell, nil)}
   end
 
   @impl true
