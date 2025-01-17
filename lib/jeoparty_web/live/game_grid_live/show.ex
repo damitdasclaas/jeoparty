@@ -109,10 +109,7 @@ defmodule JeopartyWeb.GameGridLive.Show do
     {:noreply,
      socket
      |> assign(:show_cell_modal, false)
-     |> assign(:selected_row, nil)
-     |> assign(:selected_column, nil)
-     |> assign(:editing_cell, nil)
-     |> assign(:points, nil)}
+     |> assign(:editing_cell, nil)}
   end
 
   def handle_event("delete_category", %{"id" => id}, socket) do
@@ -166,6 +163,11 @@ defmodule JeopartyWeb.GameGridLive.Show do
      |> assign(:editing_cell, nil)
      |> assign(:points, nil)
      |> assign(:cells, GameGrids.get_cells_for_grid(socket.assigns.game_grid.id))}
+  end
+
+  @impl true
+  def handle_event("start_game", _params, socket) do
+    {:noreply, push_event(socket, "start_game", %{gameId: socket.assigns.game_grid.id})}
   end
 
   defp page_title(:show), do: "Show Game grid"
