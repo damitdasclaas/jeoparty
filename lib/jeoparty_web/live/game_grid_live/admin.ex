@@ -259,19 +259,16 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   end
 
   @impl true
-  def handle_event("save_team_name", %{"id" => team_id, "name" => name}, socket) do
+  def handle_event("save_team_name", %{"team_id" => team_id, "name" => name}, socket) do
     team = Teams.get_team!(team_id)
     {:ok, _team} = Teams.update_team(team, %{name: name})
-    teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
 
-    # Broadcast team updates to all clients
-    PubSub.broadcast(
-      Jeoparty.PubSub,
-      "game_grid:#{socket.assigns.game_grid.id}",
-      {:teams_updated, teams}
-    )
+    PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:teams_updated, Teams.list_teams_for_game(socket.assigns.game_grid.id)})
 
-    {:noreply, socket |> assign(:teams, teams) |> assign(:editing_team_id, nil)}
+    {:noreply,
+     socket
+     |> assign(:editing_team_id, nil)
+     |> assign(:teams, Teams.list_teams_for_game(socket.assigns.game_grid.id))}
   end
 
   @impl true

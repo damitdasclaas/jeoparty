@@ -22,9 +22,52 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
+// Define hooks
+const Hooks = {
+  GameView: {
+    mounted() {
+      this.handleViewTransition();
+    },
+    updated() {
+      this.handleViewTransition();
+    },
+    handleViewTransition() {
+      const grid = this.el.querySelector("table");
+      const standings = this.el.querySelector("#leaderboard")?.parentElement;
+      
+      // Hide both views initially
+      if (grid) {
+        grid.style.opacity = "0";
+        requestAnimationFrame(() => {
+          grid.style.opacity = "1";
+          grid.classList.add("game-grid");
+          const cells = grid.querySelectorAll("td > div");
+          cells.forEach((cell, index) => {
+            cell.classList.add("grid-cell");
+            cell.style.setProperty('--delay', `${index * 0.05}s`);
+          });
+        });
+      }
+      
+      if (standings) {
+        standings.style.opacity = "0";
+        requestAnimationFrame(() => {
+          standings.style.opacity = "1";
+          standings.classList.add("standings-view");
+          const teams = standings.querySelectorAll("#leaderboard > div");
+          teams.forEach((team, index) => {
+            team.classList.add("team-entry");
+            team.style.setProperty('--delay', `${index * 0.1}s`);
+          });
+        });
+      }
+    }
+  }
+};
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
-  longPollFallbackMs: 2500,
+  hooks: Hooks,
   params: {_csrf_token: csrfToken}
 })
 
@@ -41,4 +84,68 @@ liveSocket.connect()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+  /* Grid cell entrance animation */
+  @keyframes gridCellEnter {
+    0% {
+      opacity: 0;
+      transform: scale(0.9) translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  /* Team entry animation */
+  @keyframes teamEnter {
+    0% {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* View transition styles */
+  .game-grid {
+    transition: opacity 0.3s ease-out;
+  }
+
+  .standings-view {
+    transition: opacity 0.3s ease-out;
+  }
+
+  /* Grid cell animation */
+  .grid-cell {
+    opacity: 0;
+    animation: gridCellEnter 0.4s ease-out forwards;
+    animation-delay: var(--delay, 0s);
+  }
+
+  /* Team entry animation */
+  .team-entry {
+    opacity: 0;
+    animation: teamEnter 0.4s ease-out forwards;
+    animation-delay: var(--delay, 0s);
+  }
+
+  /* Hover effects */
+  .grid-cell:hover {
+    transform: scale(1.02) translateY(-2px);
+    transition: transform 0.2s ease-out;
+  }
+
+  .team-entry:hover {
+    transform: scale(1.01);
+    transition: transform 0.2s ease-out;
+  }
+`;
+
+document.head.appendChild(style);
 

@@ -2,10 +2,10 @@
   <h1 class="text-2xl font-bold mb-4">Admin Panel - <%= @game_grid.name %></h1>
 
   <div class="flex justify-end mb-4 gap-2">
-    <.button phx-click="toggle_standings" class={[
-      "transition-colors",
-      @game_grid.show_standings && "bg-purple-500 hover:bg-purple-600" || "bg-purple-700 hover:bg-purple-800"
-    ]}>
+    <.button 
+      phx-click="toggle_standings" 
+      class={if @game_grid.show_standings, do: "bg-purple-500 hover:bg-purple-600", else: "bg-purple-700 hover:bg-purple-800"}
+    >
       <%= if @game_grid.show_standings do %>
         Hide Standings
       <% else %>
@@ -156,7 +156,7 @@
             <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b">
               <%= if @editing_team_id == team.id do %>
                 <form phx-submit="save_team_name" class="flex-1 flex items-center gap-2 mr-2">
-                  <input type="hidden" name="id" value={team.id}>
+                  <input type="hidden" name="team_id" value={team.id}>
                   <input type="text" name="name" value={team.name} 
                          class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                          required>
