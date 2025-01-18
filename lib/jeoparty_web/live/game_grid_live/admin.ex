@@ -24,6 +24,7 @@ defmodule JeopartyWeb.GameGridLive.Admin do
      |> assign(:show_cell_details, false)
      |> assign(:selected_cell, nil)
      |> assign(:new_team_name, "")
+     |> assign(:show_add_team, false)
      |> assign(:page_title, "Admin View - #{game_grid.name}")}
   end
 
@@ -244,6 +245,11 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     )
 
     {:noreply, assign(socket, :game_grid, game_grid)}
+  end
+
+  @impl true
+  def handle_event("toggle_add_team", _, socket) do
+    {:noreply, assign(socket, :show_add_team, !socket.assigns.show_add_team)}
   end
 
   # Add handlers for all PubSub events

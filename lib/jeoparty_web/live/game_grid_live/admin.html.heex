@@ -122,19 +122,32 @@
     <h2 class="text-xl font-bold mb-4">Team Management</h2>
     
     <div class="space-y-6">
-      <div class="bg-white p-6 rounded-xl shadow-lg border-2 border-dashed border-blue-200 hover:border-blue-300 transition-colors max-w-xl mx-auto">
-        <h3 class="text-lg font-semibold mb-4 text-blue-600">Add New Team</h3>
-        <form phx-submit="add_team" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-600">Team Name</label>
-            <input type="text" name="team[name]" value={@new_team_name} 
-                   class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
-                   placeholder="Enter team name" required />
+      <div class="bg-white rounded-xl shadow-lg border-2 border-dashed border-blue-200 hover:border-blue-300 transition-colors max-w-xl mx-auto overflow-hidden">
+        <button type="button" 
+                phx-click="toggle_add_team"
+                class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-blue-50/50 transition-colors">
+          <h3 class="text-lg font-semibold text-blue-600">Add New Team</h3>
+          <.icon name={if @show_add_team, do: "hero-chevron-up", else: "hero-chevron-down"} class="h-5 w-5 text-blue-600"/>
+        </button>
+
+        <div class={[
+          "transition-all duration-300 overflow-hidden",
+          if(@show_add_team, do: "max-h-[200px] opacity-100", else: "max-h-0 opacity-0")
+        ]}>
+          <div class="p-6 pt-2">
+            <form phx-submit="add_team" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-600">Team Name</label>
+                <input type="text" name="team[name]" value={@new_team_name} 
+                       class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                       placeholder="Enter team name" required />
+              </div>
+              <button type="submit" class="w-full bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                Add Team
+              </button>
+            </form>
           </div>
-          <button type="submit" class="w-full bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors font-semibold">
-            Add Team
-          </button>
-        </form>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
