@@ -126,6 +126,11 @@ defmodule JeopartyWeb.GameGridLive.Game do
   end
 
   @impl true
+  def handle_info({:teams_updated, teams}, socket) do
+    {:noreply, assign(socket, :teams, teams)}
+  end
+
+  @impl true
   def handle_info({:view_toggled, _}, socket) do
     {:noreply,
      socket

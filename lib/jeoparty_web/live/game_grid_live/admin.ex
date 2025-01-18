@@ -142,6 +142,14 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     case Teams.create_team(%{name: name, game_grid_id: socket.assigns.game_grid.id}) do
       {:ok, _team} ->
         teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+
+        # Broadcast team updates to all clients
+        PubSub.broadcast(
+          Jeoparty.PubSub,
+          "game_grid:#{socket.assigns.game_grid.id}",
+          {:teams_updated, teams}
+        )
+
         {:noreply, socket |> assign(:teams, teams) |> assign(:new_team_name, "")}
 
       {:error, _changeset} ->
@@ -157,6 +165,14 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     team = Teams.get_team!(team_id)
     {:ok, _} = Teams.delete_team(team)
     teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+
+    # Broadcast team updates to all clients
+    PubSub.broadcast(
+      Jeoparty.PubSub,
+      "game_grid:#{socket.assigns.game_grid.id}",
+      {:teams_updated, teams}
+    )
+
     {:noreply, assign(socket, :teams, teams)}
   end
 
@@ -165,6 +181,14 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     team = Teams.get_team!(team_id)
     {:ok, _team} = Teams.add_points(team, String.to_integer(points))
     teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+
+    # Broadcast team updates to all clients
+    PubSub.broadcast(
+      Jeoparty.PubSub,
+      "game_grid:#{socket.assigns.game_grid.id}",
+      {:teams_updated, teams}
+    )
+
     {:noreply, assign(socket, :teams, teams)}
   end
 
@@ -174,6 +198,14 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     case Teams.subtract_points(team, String.to_integer(points)) do
       {:ok, _team} ->
         teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+
+        # Broadcast team updates to all clients
+        PubSub.broadcast(
+          Jeoparty.PubSub,
+          "game_grid:#{socket.assigns.game_grid.id}",
+          {:teams_updated, teams}
+        )
+
         {:noreply, assign(socket, :teams, teams)}
       {:error, :score_below_zero} ->
         {:noreply, socket}
@@ -251,6 +283,11 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   def handle_info({:standings_toggled, show_standings}, socket) do
     {:ok, game_grid} = GameGrids.update_game_grid(socket.assigns.game_grid, %{show_standings: show_standings})
     {:noreply, assign(socket, :game_grid, game_grid)}
+  end
+
+  @impl true
+  def handle_info({:teams_updated, teams}, socket) do
+    {:noreply, assign(socket, :teams, teams)}
   end
 
   defp get_cell(cells, row, col) do
