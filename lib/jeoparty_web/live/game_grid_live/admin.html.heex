@@ -84,46 +84,33 @@
   <%= if @show_cell_details && @selected_cell do %>
     <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
          phx-click="close_modal">
-      <div class="bg-gradient-to-br from-blue-500 to-blue-700 p-12 rounded-xl shadow-2xl w-[90vw] h-[80vh] mx-4 text-white transform transition-all duration-300 scale-100"
+      <div class="bg-white p-8 rounded-xl shadow-2xl max-w-2xl w-full mx-4"
            phx-click-away="close_modal">
-        <div class="flex flex-col items-center justify-center h-full space-y-8">
-          <%= case @selected_cell.type do %>
-            <% "picture" -> %>
-              <%= if @selected_cell.data["image_url"] do %>
-                <img src={@selected_cell.data["image_url"]} 
-                     alt={@selected_cell.data["question"]} 
-                     class="max-h-[50vh] object-contain rounded-lg" />
-              <% end %>
-              <div class="text-4xl font-bold text-center">
-                <%= @selected_cell.data["question"] %>
-              </div>
-            <% "video" -> %>
-              <%= if @selected_cell.data["video_url"] do %>
-                <div class="w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden">
-                  <iframe 
-                    src={@selected_cell.data["video_url"]}
-                    class="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen
-                  ></iframe>
-                </div>
-              <% else %>
-                <div class="w-full max-w-4xl aspect-video bg-black/20 rounded-lg flex items-center justify-center">
-                  <.icon name="hero-video-camera" class="h-32 w-32 text-white/60"/>
-                </div>
-              <% end %>
-              <div class="text-4xl font-bold text-center">
-                <%= @selected_cell.data["question"] %>
-              </div>
-            <% _ -> %>
-              <div class="text-6xl font-bold text-center leading-tight">
-                <%= @selected_cell.data["question"] %>
-              </div>
-          <% end %>
-          <div class="text-3xl font-semibold text-blue-200">
+        <div class="space-y-4">
+          <div class="text-2xl font-bold text-blue-600">
             $<%= @selected_cell.data["points"] || (@selected_cell.row - 1) * 100 %>
           </div>
-          <div class="text-2xl font-medium text-blue-200 mt-8">
+          
+          <%= if @selected_cell.type == "picture" && @selected_cell.data["image_url"] do %>
+            <img src={@selected_cell.data["image_url"]} 
+                 alt={@selected_cell.data["question"]} 
+                 class="w-full h-48 object-contain rounded-lg bg-gray-100" />
+          <% end %>
+          
+          <%= if @selected_cell.type == "video" && @selected_cell.data["video_url"] do %>
+            <div class="w-full aspect-video bg-gray-100 rounded-lg overflow-hidden">
+              <iframe src={@selected_cell.data["video_url"]}
+                      class="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen>
+              </iframe>
+            </div>
+          <% end %>
+
+          <div class="text-xl font-medium">
+            Question: <%= @selected_cell.data["question"] %>
+          </div>
+          <div class="text-lg text-gray-700">
             Answer: <%= @selected_cell.data["answer"] %>
           </div>
         </div>
