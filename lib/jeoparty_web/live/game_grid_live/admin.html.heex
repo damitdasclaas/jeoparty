@@ -1,231 +1,227 @@
 <div class="container mx-auto px-4">
   <h1 class="text-2xl font-bold mb-4">Admin Panel - <%= @game_grid.name %></h1>
 
-  <div class="flex justify-end mb-4 gap-2">
-    <.button 
-      phx-click="toggle_standings" 
-      class={if @game_grid.show_standings, do: "bg-purple-500 hover:bg-purple-600", else: "bg-purple-700 hover:bg-purple-800"}
-    >
-      <%= if @game_grid.show_standings do %>
-        Hide Standings
-      <% else %>
-        Show Standings
-      <% end %>
-    </.button>
-    <.button phx-click="hide_all" class="bg-red-500 hover:bg-red-600">
-      Hide All Cells
-    </.button>
-    <.button phx-click="reset_game" class="bg-yellow-500 hover:bg-yellow-600">
-      Reset Game
-    </.button>
-  </div>
-  
-  <table class="w-full border-collapse">
-    <%= for row <- 1..@game_grid.rows do %>
-      <tr>
-        <%= for col <- 1..@game_grid.columns do %>
-          <td class="p-2" style={"min-width: 200px; width: #{100/@game_grid.columns}%"}>
-            <%= if row == 1 do %>
-              <%= if cell = get_cell(@cells, 1, col) do %>
-                <div class="w-full h-24 rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
-                  <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-lg tracking-wide">
-                    <%= cell.data["question"] %>
-                  </div>
-                </div>
-              <% else %>
-                <div class="w-full h-24 rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
-                  <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-lg tracking-wide text-white/50">
-                    No category given
-                  </div>
-                </div>
-              <% end %>
-            <% else %>
-              <%= if cell = get_cell(@cells, row, col) do %>
-                <div class="w-full h-32 rounded-xl shadow-lg relative bg-gradient-to-br from-blue-500 to-blue-700 text-white group">
-                  <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <div class="text-3xl font-bold mb-2">$<%= cell.data["points"] || (row - 1) * 100 %></div>
-                    <div class="flex gap-2">
-                      <button 
-                        phx-click={if MapSet.member?(@revealed_cells, cell.id), do: "hide_cell", else: "reveal_cell"}
-                        phx-value-id={cell.id}
-                        class={[
-                          "w-10 h-10 flex items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-300",
-                          if(MapSet.member?(@revealed_cells, cell.id), 
-                            do: "bg-red-500/80",
-                            else: "bg-green-500/80")
-                        ]}
-                      >
-                        <.icon name={if MapSet.member?(@revealed_cells, cell.id), do: "hero-eye-slash", else: "hero-eye"} class="h-6 w-6"/>
-                      </button>
-                      <button 
-                        phx-click="view_cell"
-                        phx-value-id={cell.id}
-                        class={[
-                          "w-10 h-10 flex items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-300",
-                          @viewed_cell_id == cell.id && "bg-yellow-500/80" || "bg-blue-500/80"
-                        ]}
-                      >
-                        <.icon name={if @viewed_cell_id == cell.id, do: "hero-stop", else: "hero-play"} class="h-6 w-6"/>
-                      </button>
-                      <button 
-                        phx-click="show_cell_details"
-                        phx-value-id={cell.id}
-                        class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all duration-300"
-                      >
-                        <.icon name="hero-information-circle" class="h-6 w-6"/>
-                      </button>
+  <div class="flex flex-col gap-6">
+    <!-- Game Grid -->
+    <div class="bg-white rounded-xl shadow-xl p-6">
+      <h2 class="text-2xl font-bold mb-4">Game Grid</h2>
+      <table class="w-full border-collapse">
+        <%= for row <- 1..@game_grid.rows do %>
+          <tr>
+            <%= for col <- 1..@game_grid.columns do %>
+              <td class="p-2" style={"min-width: 200px; width: #{100/@game_grid.columns}%"}>
+                <%= if row == 1 do %>
+                  <%= if cell = get_cell(@cells, 1, col) do %>
+                    <div class="w-full h-24 rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
+                      <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-lg tracking-wide">
+                        <%= cell.data["question"] %>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              <% else %>
-                <div class="w-full h-32 rounded-xl shadow-lg relative bg-gradient-to-br from-gray-500 to-gray-700 text-white opacity-50">
-                  <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="text-3xl font-bold">$<%= (row - 1) * 100 %></div>
-                  </div>
-                </div>
-              <% end %>
+                  <% else %>
+                    <div class="w-full h-24 rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
+                      <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-lg tracking-wide text-white/50">
+                        No category given
+                      </div>
+                    </div>
+                  <% end %>
+                <% else %>
+                  <%= if cell = get_cell(@cells, row, col) do %>
+                    <div class="w-full h-32 rounded-xl shadow-lg relative bg-gradient-to-br from-blue-500 to-blue-700 text-white group">
+                      <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <div class="text-3xl font-bold mb-2">$<%= cell.data["points"] || (row - 1) * 100 %></div>
+                        <div class="flex gap-2">
+                          <button 
+                            phx-click={if MapSet.member?(@revealed_cells, cell.id), do: "hide_cell", else: "reveal_cell"}
+                            phx-value-id={cell.id}
+                            class={[
+                              "w-10 h-10 flex items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-300",
+                              if(MapSet.member?(@revealed_cells, cell.id), 
+                                do: "bg-red-500/80",
+                                else: "bg-green-500/80")
+                            ]}
+                          >
+                            <.icon name={if MapSet.member?(@revealed_cells, cell.id), do: "hero-eye-slash", else: "hero-eye"} class="h-6 w-6"/>
+                          </button>
+                          <button 
+                            phx-click="view_cell"
+                            phx-value-id={cell.id}
+                            class={[
+                              "w-10 h-10 flex items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-300",
+                              @viewed_cell_id == cell.id && "bg-yellow-500/80" || "bg-blue-500/80"
+                            ]}
+                          >
+                            <.icon name={if @viewed_cell_id == cell.id, do: "hero-stop", else: "hero-play"} class="h-6 w-6"/>
+                          </button>
+                          <button 
+                            phx-click="show_cell_details"
+                            phx-value-id={cell.id}
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all duration-300"
+                          >
+                            <.icon name="hero-information-circle" class="h-6 w-6"/>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  <% else %>
+                    <div class="w-full h-32 rounded-xl shadow-lg relative bg-gradient-to-br from-gray-500 to-gray-700 text-white opacity-50">
+                      <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-3xl font-bold">$<%= (row - 1) * 100 %></div>
+                      </div>
+                    </div>
+                  <% end %>
+                <% end %>
+              </td>
             <% end %>
-          </td>
+          </tr>
         <% end %>
-      </tr>
-    <% end %>
-  </table>
-
-    <div class="mt-8 mb-8">
-    <h2 class="text-xl font-bold mb-4">Current Standings</h2>
-    <div class="bg-white rounded-xl shadow-lg p-6">
-      <div class="space-y-3">
-        <%= for {team, index} <- Enum.sort_by(@teams, & &1.score, :desc) |> Enum.with_index(1) do %>
-          <div class="flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-gray-50">
-            <div class="flex items-center gap-3">
-              <div class={[
-                "w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold",
-                case index do
-                  1 -> "bg-yellow-100 text-yellow-700"
-                  2 -> "bg-gray-100 text-gray-600"
-                  3 -> "bg-amber-100 text-amber-700"
-                  _ -> "bg-blue-100 text-blue-700"
-                end
-              ]}>
-                <%= index %>
-              </div>
-              <span class="font-semibold"><%= team.name %></span>
-            </div>
-            <span class="font-bold text-lg">$<%= team.score %></span>
-          </div>
-        <% end %>
-      </div>
+      </table>
     </div>
-  </div>
 
-  <div class="mt-8">
-    <h2 class="text-xl font-bold mb-4">Team Management</h2>
-    
-    <div class="space-y-6">
-      <div class="bg-white rounded-xl shadow-lg border-2 border-dashed border-blue-200 hover:border-blue-300 transition-colors max-w-xl mx-auto overflow-hidden">
-        <button type="button" 
-                phx-click="toggle_add_team"
-                class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-blue-50/50 transition-colors">
-          <h3 class="text-lg font-semibold text-blue-600">Add New Team</h3>
-          <.icon name={if @show_add_team, do: "hero-chevron-up", else: "hero-chevron-down"} class="h-5 w-5 text-blue-600"/>
+    <!-- Admin Controls -->
+    <div class="bg-white rounded-xl shadow-xl p-6">
+      <h2 class="text-2xl font-bold mb-4">Game Controls</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button class={[
+          "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all duration-200 w-full",
+          "shadow-md hover:shadow-lg",
+          @game_grid.show_standings && "bg-blue-100 text-blue-700 hover:bg-blue-200" || 
+          "bg-blue-500 text-white hover:bg-blue-600"
+        ]}
+          phx-click="toggle_standings">
+          <.icon name={@game_grid.show_standings && "hero-chart-bar" || "hero-squares-2x2"} class="h-5 w-5"/>
+          <%= @game_grid.show_standings && "Show Game Grid" || "Show Standings" %>
         </button>
 
-        <div class={[
-          "transition-all duration-300 overflow-hidden",
-          if(@show_add_team, do: "max-h-[200px] opacity-100", else: "max-h-0 opacity-0")
-        ]}>
-          <div class="p-6 pt-2">
-            <form phx-submit="add_team" class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-600">Team Name</label>
-                <input type="text" name="team[name]" value={@new_team_name} 
-                       class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
-                       placeholder="Enter team name" required />
-              </div>
-              <button type="submit" class="w-full bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors font-semibold">
-                Add Team
-              </button>
-            </form>
-          </div>
+        <button class={[
+          "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all duration-200 w-full",
+          "shadow-md hover:shadow-lg",
+          "bg-indigo-500 text-white hover:bg-indigo-600"
+        ]}
+          phx-click="hide_all">
+          <.icon name="hero-eye-slash" class="h-5 w-5"/>
+          Hide All Cells
+        </button>
+
+        <button class={[
+          "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all duration-200 w-full",
+          "shadow-md hover:shadow-lg",
+          "bg-red-500 text-white hover:bg-red-600"
+        ]}
+          phx-click="reset_game"
+          data-confirm="Are you sure you want to reset the game? This will:
+• Hide all revealed cells
+• Reset all team scores to 0
+• Show the game grid">
+          <.icon name="hero-arrow-path" class="h-5 w-5"/>
+          Reset Game
+        </button>
+      </div>
+    </div>
+
+    <!-- Add New Team -->
+    <div class="bg-white rounded-xl shadow-lg border-2 border-dashed border-blue-200 hover:border-blue-300 transition-colors max-w-xl mx-auto overflow-hidden">
+      <button type="button" 
+              phx-click="toggle_add_team"
+              class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-blue-50/50 transition-colors">
+        <h3 class="text-lg font-semibold text-blue-600">Add New Team</h3>
+        <.icon name={if @show_add_team, do: "hero-chevron-up", else: "hero-chevron-down"} class="h-5 w-5 text-blue-600"/>
+      </button>
+
+      <div class={[
+        "transition-all duration-300 overflow-hidden",
+        if(@show_add_team, do: "max-h-[200px] opacity-100", else: "max-h-0 opacity-0")
+      ]}>
+        <div class="p-6 pt-2">
+          <form phx-submit="add_team" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-600">Team Name</label>
+              <input type="text" name="team[name]" value={@new_team_name} 
+                     class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                     placeholder="Enter team name" required />
+            </div>
+            <button type="submit" class="w-full bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+              Add Team
+            </button>
+          </form>
         </div>
       </div>
+    </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <%= for team <- Enum.sort_by(@teams, & &1.inserted_at) do %>
-          <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b">
-              <%= if @editing_team_id == team.id do %>
-                <form phx-submit="save_team_name" class="flex-1 flex items-center gap-2 mr-2">
-                  <input type="hidden" name="team_id" value={team.id}>
-                  <input type="text" name="name" value={team.name} 
-                         class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                         required>
-                  <div class="flex gap-1">
-                    <button type="submit" class="text-green-600 hover:text-green-700 p-1 hover:bg-green-50 rounded-lg transition-colors">
-                      <.icon name="hero-check" class="h-5 w-5"/>
-                    </button>
-                    <button type="button" phx-click="cancel_edit_team"
-                            class="text-gray-600 hover:text-gray-700 p-1 hover:bg-gray-100 rounded-lg transition-colors">
-                      <.icon name="hero-x-mark" class="h-5 w-5"/>
-                    </button>
-                  </div>
-                </form>
-              <% else %>
-                <h3 class="text-lg font-semibold text-gray-800"><%= team.name %></h3>
-              <% end %>
-              <div class="flex gap-1">
-                <%= unless @editing_team_id == team.id do %>
-                  <button phx-click="edit_team_name" phx-value-id={team.id}
-                          class="text-blue-500 hover:text-blue-700 p-1 hover:bg-blue-50 rounded-lg transition-colors">
-                    <.icon name="hero-pencil-square" class="h-5 w-5" />
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <%= for team <- Enum.sort_by(@teams, & &1.inserted_at) do %>
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+          <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b">
+            <%= if @editing_team_id == team.id do %>
+              <form phx-submit="save_team_name" class="flex-1 flex items-center gap-2 mr-2">
+                <input type="hidden" name="team_id" value={team.id}>
+                <input type="text" name="name" value={team.name} 
+                       class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                       required>
+                <div class="flex gap-1">
+                  <button type="submit" class="text-green-600 hover:text-green-700 p-1 hover:bg-green-50 rounded-lg transition-colors">
+                    <.icon name="hero-check" class="h-5 w-5"/>
                   </button>
-                <% end %>
-                <button phx-click="delete_team" phx-value-id={team.id}
-                        class="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-lg transition-colors">
-                  <.icon name="hero-trash" class="h-5 w-5" />
+                  <button type="button" phx-click="cancel_edit_team"
+                          class="text-gray-600 hover:text-gray-700 p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                    <.icon name="hero-x-mark" class="h-5 w-5"/>
+                  </button>
+                </div>
+              </form>
+            <% else %>
+              <h3 class="text-lg font-semibold text-gray-800"><%= team.name %></h3>
+            <% end %>
+            <div class="flex gap-1">
+              <%= unless @editing_team_id == team.id do %>
+                <button phx-click="edit_team_name" phx-value-id={team.id}
+                        class="text-blue-500 hover:text-blue-700 p-1 hover:bg-blue-50 rounded-lg transition-colors">
+                  <.icon name="hero-pencil-square" class="h-5 w-5" />
                 </button>
+              <% end %>
+              <button phx-click="delete_team" phx-value-id={team.id}
+                      class="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                <.icon name="hero-trash" class="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+          
+          <div class="p-6">
+            <div class="text-center mb-6">
+              <div class={[
+                "text-4xl font-bold",
+                if(team.score < 0, do: "text-red-600", else: "text-blue-600")
+              ]}>
+                $<%= team.score %>
               </div>
             </div>
             
-            <div class="p-6">
-              <div class="text-center mb-6">
-                <div class={[
-                  "text-4xl font-bold",
-                  if(team.score < 0, do: "text-red-600", else: "text-blue-600")
-                ]}>
-                  $<%= team.score %>
-                </div>
+            <div class="space-y-4">
+              <div class="flex gap-3">
+                <button phx-click="subtract_points" phx-value-id={team.id} phx-value-points="100"
+                        class="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors font-semibold">
+                  -$100
+                </button>
+                <button phx-click="add_points" phx-value-id={team.id} phx-value-points="100"
+                        class="flex-1 bg-green-100 text-green-700 px-3 py-2 rounded-lg hover:bg-green-200 transition-colors font-semibold">
+                  +$100
+                </button>
               </div>
-              
-              <div class="space-y-4">
-                <div class="flex gap-3">
-                  <button phx-click="subtract_points" phx-value-id={team.id} phx-value-points="100"
-                          class="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors font-semibold">
-                    -$100
-                  </button>
-                  <button phx-click="add_points" phx-value-id={team.id} phx-value-points="100"
-                          class="flex-1 bg-green-100 text-green-700 px-3 py-2 rounded-lg hover:bg-green-200 transition-colors font-semibold">
-                    +$100
-                  </button>
-                </div>
 
-                <form phx-submit="add_custom_points" class="flex gap-2">
-                  <input type="hidden" name="team_id" value={team.id}>
-                  <div class="relative flex-1">
-                    <input type="number" name="points" placeholder="Enter points" required
-                           class="w-full rounded-lg border-gray-300 pl-6 focus:border-blue-500 focus:ring-blue-500">
-                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                  </div>
-                  <button type="submit" 
-                          class="bg-blue-100 text-blue-700 p-2 rounded-lg hover:bg-blue-200 transition-colors flex items-center justify-center w-10 h-10">
-                    <.icon name="hero-plus" class="h-5 w-5"/>
-                  </button>
-                </form>
-              </div>
+              <form phx-submit="add_custom_points" class="flex gap-2">
+                <input type="hidden" name="team_id" value={team.id}>
+                <div class="relative flex-1">
+                  <input type="number" name="points" placeholder="Enter points" required
+                         class="w-full rounded-lg border-gray-300 pl-6 focus:border-blue-500 focus:ring-blue-500">
+                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                </div>
+                <button type="submit" 
+                        class="bg-blue-100 text-blue-700 p-2 rounded-lg hover:bg-blue-200 transition-colors flex items-center justify-center w-10 h-10">
+                  <.icon name="hero-plus" class="h-5 w-5"/>
+                </button>
+              </form>
             </div>
           </div>
-        <% end %>
-      </div>
+        </div>
+      <% end %>
     </div>
   </div>
 

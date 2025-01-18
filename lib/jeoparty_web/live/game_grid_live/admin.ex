@@ -5,28 +5,29 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   alias Phoenix.PubSub
 
   @impl true
-  def mount(%{"id" => grid_id}, _session, socket) do
+  def mount(%{"id" => id}, _session, socket) do
     if connected?(socket) do
-      PubSub.subscribe(Jeoparty.PubSub, "game_grid:#{grid_id}")
+      Phoenix.PubSub.subscribe(Jeoparty.PubSub, "game_grid:#{id}")
+      Phoenix.PubSub.subscribe(Jeoparty.PubSub, "teams:#{id}")
     end
 
-    game_grid = GameGrids.get_game_grid!(grid_id)
-    cells = GameGrids.get_cells_for_grid(grid_id)
-    teams = Teams.list_teams_for_game(grid_id)
+    game_grid = GameGrids.get_game_grid!(id)
+    teams = Teams.list_teams_for_game(id)
+    cells = GameGrids.get_cells_for_grid(id)
 
     {:ok,
      socket
      |> assign(:game_grid, game_grid)
-     |> assign(:cells, cells)
      |> assign(:teams, teams)
+     |> assign(:cells, cells)
      |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids || []))
      |> assign(:viewed_cell_id, game_grid.viewed_cell_id)
      |> assign(:show_cell_details, false)
      |> assign(:selected_cell, nil)
-     |> assign(:new_team_name, "")
      |> assign(:show_add_team, false)
      |> assign(:editing_team_id, nil)
-     |> assign(:page_title, "Admin View - #{game_grid.name}")}
+     |> assign(:modal, nil)
+     |> assign(:new_team_name, "")}
   end
 
   @impl true
@@ -82,31 +83,39 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   end
 
   @impl true
-  def handle_event("reset_game", _params, socket) do
+  def handle_event("reset_game", _, socket) do
     # First hide all cells
     {:ok, game_grid} = GameGrids.hide_all_cells(socket.assigns.game_grid)
 
-    # Reset all team scores
+    # Reset all team scores to 0
     Enum.each(socket.assigns.teams, fn team ->
-      Teams.reset_points(team)
+      {:ok, _} = Teams.update_team(team, %{score: 0})
     end)
+
+    # Update game grid to show game board instead of standings
+    {:ok, game_grid} = GameGrids.update_game_grid(game_grid, %{show_standings: false})
+
+    # Get updated teams list
+    teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
 
     # Broadcast reset event to all clients
     PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", :reset_game)
 
-    # Close any open previews
-    PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:close_preview, nil})
-
-    teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+    # Broadcast teams update
+    PubSub.broadcast(
+      Jeoparty.PubSub,
+      "game_grid:#{socket.assigns.game_grid.id}",
+      {:teams_updated, teams}
+    )
 
     {:noreply,
      socket
      |> assign(:game_grid, game_grid)
+     |> assign(:teams, teams)
      |> assign(:revealed_cells, MapSet.new())
      |> assign(:viewed_cell_id, nil)
      |> assign(:show_cell_details, false)
-     |> assign(:selected_cell, nil)
-     |> assign(:teams, teams)}
+     |> assign(:selected_cell, nil)}
   end
 
   @impl true
@@ -348,6 +357,14 @@ defmodule JeopartyWeb.GameGridLive.Admin do
      |> assign(:viewed_cell_id, nil)
      |> assign(:show_cell_details, false)
      |> assign(:selected_cell, nil)}
+  end
+
+  def handle_event("show_modal", %{"id" => modal}, socket) do
+    {:noreply, assign(socket, :modal, modal)}
+  end
+
+  def handle_event("hide_modal", %{"id" => _modal}, socket) do
+    {:noreply, assign(socket, :modal, nil)}
   end
 
   defp get_cell(cells, row, col) do
