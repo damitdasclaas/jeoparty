@@ -149,3 +149,7 @@ style.textContent = `
 
 document.head.appendChild(style);
 
+window.addEventListener("phx:reload_page", () => {
+  window.location.reload();
+});
+

@@ -92,8 +92,12 @@ defmodule JeopartyWeb.GameGridLive.Admin do
       {:ok, _} = Teams.update_team(team, %{score: 0})
     end)
 
-    # Update game grid to show game board instead of standings
-    {:ok, game_grid} = GameGrids.update_game_grid(game_grid, %{show_standings: false})
+    # Update game grid to show game board instead of standings and ensure revealed_cell_ids is empty
+    {:ok, game_grid} = GameGrids.update_game_grid(game_grid, %{
+      show_standings: false,
+      revealed_cell_ids: [],
+      viewed_cell_id: nil
+    })
 
     # Get updated teams list
     teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
@@ -106,6 +110,13 @@ defmodule JeopartyWeb.GameGridLive.Admin do
       Jeoparty.PubSub,
       "game_grid:#{socket.assigns.game_grid.id}",
       {:teams_updated, teams}
+    )
+
+    # Broadcast reload event specifically to game view
+    PubSub.broadcast(
+      Jeoparty.PubSub,
+      "game_grid:#{socket.assigns.game_grid.id}",
+      {:reload_game_view, true}
     )
 
     {:noreply,
@@ -357,6 +368,12 @@ defmodule JeopartyWeb.GameGridLive.Admin do
      |> assign(:viewed_cell_id, nil)
      |> assign(:show_cell_details, false)
      |> assign(:selected_cell, nil)}
+  end
+
+  @impl true
+  def handle_info({:reload_game_view, _}, socket) do
+    # Ignore the reload event in admin view
+    {:noreply, socket}
   end
 
   def handle_event("show_modal", %{"id" => modal}, socket) do

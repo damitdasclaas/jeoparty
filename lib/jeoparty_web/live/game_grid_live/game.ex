@@ -138,6 +138,13 @@ defmodule JeopartyWeb.GameGridLive.Game do
      |> assign(:selected_cell, nil)}
   end
 
+  @impl true
+  def handle_info({:reload_game_view, _}, socket) do
+    {:noreply,
+     socket
+     |> push_event("reload_page", %{})}
+  end
+
   defp get_cell(cells, row, col) do
     row = if is_binary(row), do: String.to_integer(row), else: row
     col = if is_binary(col), do: String.to_integer(col), else: col
