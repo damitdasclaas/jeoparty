@@ -41,8 +41,8 @@
                         class={[
                           "w-10 h-10 flex items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-300",
                           if(MapSet.member?(@revealed_cells, cell.id), 
-                            do: "bg-red-500/80 hover:bg-red-600/80",
-                            else: "bg-green-500/80 hover:bg-green-600/80")
+                            do: "bg-red-500/80",
+                            else: "bg-green-500/80")
                         ]}
                       >
                         <.icon name={if MapSet.member?(@revealed_cells, cell.id), do: "hero-eye-slash", else: "hero-eye"} class="h-6 w-6"/>
@@ -52,7 +52,7 @@
                         phx-value-id={cell.id}
                         class={[
                           "w-10 h-10 flex items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-300",
-                          @viewed_cell_id == cell.id && "bg-yellow-500/80 hover:bg-yellow-600/80" || "bg-blue-500/80 hover:bg-blue-600/80"
+                          @viewed_cell_id == cell.id && "bg-yellow-500/80" || "bg-blue-500/80"
                         ]}
                       >
                         <.icon name={if @viewed_cell_id == cell.id, do: "hero-stop", else: "hero-play"} class="h-6 w-6"/>
