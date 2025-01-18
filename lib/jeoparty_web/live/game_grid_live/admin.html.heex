@@ -3,78 +3,84 @@
 
   <div class="flex flex-col gap-6">
     <!-- Game Grid -->
-    <div class="bg-white rounded-xl shadow-xl p-6">
+    <div class="bg-white rounded-xl shadow-xl p-6 overflow-x-auto">
       <h2 class="text-2xl font-bold mb-4">Game Grid</h2>
-      <table class="w-full border-collapse">
-        <%= for row <- 1..@game_grid.rows do %>
-          <tr>
-            <%= for col <- 1..@game_grid.columns do %>
-              <td class="p-2" style={"min-width: 200px; width: #{100/@game_grid.columns}%"}>
-                <%= if row == 1 do %>
-                  <%= if cell = get_cell(@cells, 1, col) do %>
-                    <div class="w-full h-24 rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
-                      <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-lg tracking-wide">
-                        <%= cell.data["question"] %>
-                      </div>
-                    </div>
-                  <% else %>
-                    <div class="w-full h-24 rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
-                      <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-lg tracking-wide text-white/50">
-                        No category given
-                      </div>
-                    </div>
-                  <% end %>
-                <% else %>
-                  <%= if cell = get_cell(@cells, row, col) do %>
-                    <div class="w-full h-32 rounded-xl shadow-lg relative bg-gradient-to-br from-blue-500 to-blue-700 text-white group">
-                      <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <div class="text-3xl font-bold mb-2">$<%= cell.data["points"] || (row - 1) * 100 %></div>
-                        <div class="flex gap-2">
-                          <button 
-                            phx-click={if MapSet.member?(@revealed_cells, cell.id), do: "hide_cell", else: "reveal_cell"}
-                            phx-value-id={cell.id}
-                            class={[
-                              "w-10 h-10 flex items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-300",
-                              if(MapSet.member?(@revealed_cells, cell.id), 
-                                do: "bg-red-500/80",
-                                else: "bg-green-500/80")
-                            ]}
-                          >
-                            <.icon name={if MapSet.member?(@revealed_cells, cell.id), do: "hero-eye-slash", else: "hero-eye"} class="h-6 w-6"/>
-                          </button>
-                          <button 
-                            phx-click="view_cell"
-                            phx-value-id={cell.id}
-                            class={[
-                              "w-10 h-10 flex items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-300",
-                              @viewed_cell_id == cell.id && "bg-yellow-500/80" || "bg-blue-500/80"
-                            ]}
-                          >
-                            <.icon name={if @viewed_cell_id == cell.id, do: "hero-stop", else: "hero-play"} class="h-6 w-6"/>
-                          </button>
-                          <button 
-                            phx-click="show_cell_details"
-                            phx-value-id={cell.id}
-                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all duration-300"
-                          >
-                            <.icon name="hero-information-circle" class="h-6 w-6"/>
-                          </button>
+      <div class="min-w-[320px]">
+        <table class="w-full border-collapse">
+          <%= for row <- 1..@game_grid.rows do %>
+            <tr>
+              <%= for col <- 1..@game_grid.columns do %>
+                <td class="p-1 md:p-2" style={"width: #{100/@game_grid.columns}%"}>
+                  <%= if row == 1 do %>
+                    <%= if cell = get_cell(@cells, 1, col) do %>
+                      <div class="w-full h-16 md:h-24 rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
+                        <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-sm md:text-lg tracking-wide p-2">
+                          <%= cell.data["question"] %>
                         </div>
                       </div>
-                    </div>
-                  <% else %>
-                    <div class="w-full h-32 rounded-xl shadow-lg relative bg-gradient-to-br from-gray-500 to-gray-700 text-white opacity-50">
-                      <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="text-3xl font-bold">$<%= (row - 1) * 100 %></div>
+                    <% else %>
+                      <div class="w-full h-16 md:h-24 rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
+                        <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-sm md:text-lg tracking-wide text-white/50 p-2">
+                          No category
+                        </div>
                       </div>
-                    </div>
+                    <% end %>
+                  <% else %>
+                    <%= if cell = get_cell(@cells, row, col) do %>
+                      <div class="w-full h-24 md:h-32 rounded-xl shadow-lg relative bg-gradient-to-br from-blue-500 to-blue-700 text-white group">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                          <div class="text-xl md:text-3xl font-bold mb-2">
+                            <span class="hidden md:inline">$</span><%= cell.data["points"] || (row - 1) * 100 %>
+                          </div>
+                          <div class="flex gap-1 md:gap-2">
+                            <button 
+                              phx-click={if MapSet.member?(@revealed_cells, cell.id), do: "hide_cell", else: "reveal_cell"}
+                              phx-value-id={cell.id}
+                              class={[
+                                "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-300",
+                                if(MapSet.member?(@revealed_cells, cell.id), 
+                                  do: "bg-red-500/80",
+                                  else: "bg-green-500/80")
+                              ]}
+                            >
+                              <.icon name={if MapSet.member?(@revealed_cells, cell.id), do: "hero-eye-slash", else: "hero-eye"} class="h-5 w-5 md:h-6 md:w-6"/>
+                            </button>
+                            <button 
+                              phx-click="view_cell"
+                              phx-value-id={cell.id}
+                              class={[
+                                "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-300",
+                                @viewed_cell_id == cell.id && "bg-yellow-500/80" || "bg-blue-500/80"
+                              ]}
+                            >
+                              <.icon name={if @viewed_cell_id == cell.id, do: "hero-stop", else: "hero-play"} class="h-5 w-5 md:h-6 md:w-6"/>
+                            </button>
+                            <button 
+                              phx-click="show_cell_details"
+                              phx-value-id={cell.id}
+                              class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all duration-300"
+                            >
+                              <.icon name="hero-information-circle" class="h-5 w-5 md:h-6 md:w-6"/>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    <% else %>
+                      <div class="w-full h-24 md:h-32 rounded-xl shadow-lg relative bg-gradient-to-br from-gray-500 to-gray-700 text-white opacity-50">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                          <div class="text-xl md:text-3xl font-bold">
+                            <span class="hidden md:inline">$</span><%= (row - 1) * 100 %>
+                          </div>
+                        </div>
+                      </div>
+                    <% end %>
                   <% end %>
-                <% end %>
-              </td>
-            <% end %>
-          </tr>
-        <% end %>
-      </table>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </table>
+      </div>
     </div>
 
     <!-- Admin Controls -->
