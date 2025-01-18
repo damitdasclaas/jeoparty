@@ -81,6 +81,70 @@
     <% end %>
   </table>
 
+  <div class="mt-8">
+    <h2 class="text-xl font-bold mb-4">Team Management</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="bg-white p-6 rounded-xl shadow-lg">
+        <h3 class="text-lg font-semibold mb-4">Add New Team</h3>
+        <form phx-submit="add_team" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Team Name</label>
+            <input type="text" name="team[name]" value={@new_team_name} 
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                   placeholder="Enter team name" required />
+          </div>
+          <button type="submit" class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+            Add Team
+          </button>
+        </form>
+      </div>
+
+      <%= for team <- @teams do %>
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="text-lg font-semibold"><%= team.name %></h3>
+            <button phx-click="delete_team" phx-value-id={team.id}
+                    class="text-red-500 hover:text-red-700">
+              <.icon name="hero-trash" class="h-5 w-5" />
+            </button>
+          </div>
+          
+          <div class="text-3xl font-bold text-center mb-4">
+            $<%= team.score %>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-2">
+            <button phx-click="add_points" phx-value-id={team.id} phx-value-points="100"
+                    class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors">
+              +$100
+            </button>
+            <button phx-click="subtract_points" phx-value-id={team.id} phx-value-points="100"
+                    class="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors">
+              -$100
+            </button>
+            <button phx-click="add_points" phx-value-id={team.id} phx-value-points="200"
+                    class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors">
+              +$200
+            </button>
+            <button phx-click="subtract_points" phx-value-id={team.id} phx-value-points="200"
+                    class="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors">
+              -$200
+            </button>
+            <button phx-click="add_points" phx-value-id={team.id} phx-value-points="300"
+                    class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors">
+              +$300
+            </button>
+            <button phx-click="subtract_points" phx-value-id={team.id} phx-value-points="300"
+                    class="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors">
+              -$300
+            </button>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
   <%= if @show_cell_details && @selected_cell do %>
     <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
          phx-click="close_modal">

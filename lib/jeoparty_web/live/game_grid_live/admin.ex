@@ -1,6 +1,7 @@
 defmodule JeopartyWeb.GameGridLive.Admin do
   use JeopartyWeb, :live_view
   alias Jeoparty.GameGrids
+  alias Jeoparty.Teams
   alias Phoenix.PubSub
 
   @impl true
@@ -11,15 +12,18 @@ defmodule JeopartyWeb.GameGridLive.Admin do
 
     game_grid = GameGrids.get_game_grid!(grid_id)
     cells = GameGrids.get_cells_for_grid(grid_id)
+    teams = Teams.list_teams_for_game(grid_id)
 
     {:ok,
      socket
      |> assign(:game_grid, game_grid)
      |> assign(:cells, cells)
+     |> assign(:teams, teams)
      |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids || []))
      |> assign(:viewed_cell_id, game_grid.viewed_cell_id)
      |> assign(:show_cell_details, false)
      |> assign(:selected_cell, nil)
+     |> assign(:new_team_name, "")
      |> assign(:page_title, "Admin View - #{game_grid.name}")}
   end
 
@@ -80,11 +84,18 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     # First hide all cells
     {:ok, game_grid} = GameGrids.hide_all_cells(socket.assigns.game_grid)
 
+    # Reset all team scores
+    Enum.each(socket.assigns.teams, fn team ->
+      Teams.reset_points(team)
+    end)
+
     # Broadcast reset event to all clients
     PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", :reset_game)
 
     # Close any open previews
     PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:close_preview, nil})
+
+    teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
 
     {:noreply,
      socket
@@ -92,7 +103,8 @@ defmodule JeopartyWeb.GameGridLive.Admin do
      |> assign(:revealed_cells, MapSet.new())
      |> assign(:viewed_cell_id, nil)
      |> assign(:show_cell_details, false)
-     |> assign(:selected_cell, nil)}
+     |> assign(:selected_cell, nil)
+     |> assign(:teams, teams)}
   end
 
   @impl true
@@ -124,41 +136,48 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     end
   end
 
+  # Team management events
   @impl true
-  def handle_info({:cell_selected, cell}, socket) do
-    {:noreply,
-     socket
-     |> assign(:revealed_cells, MapSet.put(socket.assigns.revealed_cells, cell.id))
-     |> assign(:viewed_cell_id, cell.id)}
+  def handle_event("add_team", %{"team" => %{"name" => name}}, socket) when name != "" do
+    case Teams.create_team(%{name: name, game_grid_id: socket.assigns.game_grid.id}) do
+      {:ok, _team} ->
+        teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+        {:noreply, socket |> assign(:teams, teams) |> assign(:new_team_name, "")}
+
+      {:error, _changeset} ->
+        {:noreply, socket}
+    end
   end
 
   @impl true
-  def handle_info({:reveal_cell, cell}, socket) do
-    {:noreply,
-     socket
-     |> assign(:revealed_cells, MapSet.put(socket.assigns.revealed_cells, cell.id))}
+  def handle_event("add_team", _, socket), do: {:noreply, socket}
+
+  @impl true
+  def handle_event("delete_team", %{"id" => team_id}, socket) do
+    team = Teams.get_team!(team_id)
+    {:ok, _} = Teams.delete_team(team)
+    teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+    {:noreply, assign(socket, :teams, teams)}
   end
 
   @impl true
-  def handle_info({:hide_cell, cell}, socket) do
-    {:noreply,
-     socket
-     |> assign(:revealed_cells, MapSet.delete(socket.assigns.revealed_cells, cell.id))}
+  def handle_event("add_points", %{"id" => team_id, "points" => points}, socket) do
+    team = Teams.get_team!(team_id)
+    {:ok, _team} = Teams.add_points(team, String.to_integer(points))
+    teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+    {:noreply, assign(socket, :teams, teams)}
   end
 
   @impl true
-  def handle_info({:preview_cell, _cell}, socket) do
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_info({:close_preview, _}, socket) do
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_info({:view_toggled, cell}, socket) do
-    {:noreply, socket |> assign(:viewed_cell_id, cell && cell.id)}
+  def handle_event("subtract_points", %{"id" => team_id, "points" => points}, socket) do
+    team = Teams.get_team!(team_id)
+    case Teams.subtract_points(team, String.to_integer(points)) do
+      {:ok, _team} ->
+        teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+        {:noreply, assign(socket, :teams, teams)}
+      {:error, :score_below_zero} ->
+        {:noreply, socket}
+    end
   end
 
   defp get_cell(cells, row, col) do
