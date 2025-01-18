@@ -154,11 +154,37 @@
         <%= for team <- Enum.sort_by(@teams, & &1.inserted_at) do %>
           <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
             <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b">
-              <h3 class="text-lg font-semibold text-gray-800"><%= team.name %></h3>
-              <button phx-click="delete_team" phx-value-id={team.id}
-                      class="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-lg transition-colors">
-                <.icon name="hero-trash" class="h-5 w-5" />
-              </button>
+              <%= if @editing_team_id == team.id do %>
+                <form phx-submit="save_team_name" class="flex-1 flex items-center gap-2 mr-2">
+                  <input type="hidden" name="id" value={team.id}>
+                  <input type="text" name="name" value={team.name} 
+                         class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                         required>
+                  <div class="flex gap-1">
+                    <button type="submit" class="text-green-600 hover:text-green-700 p-1 hover:bg-green-50 rounded-lg transition-colors">
+                      <.icon name="hero-check" class="h-5 w-5"/>
+                    </button>
+                    <button type="button" phx-click="cancel_edit_team"
+                            class="text-gray-600 hover:text-gray-700 p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                      <.icon name="hero-x-mark" class="h-5 w-5"/>
+                    </button>
+                  </div>
+                </form>
+              <% else %>
+                <h3 class="text-lg font-semibold text-gray-800"><%= team.name %></h3>
+              <% end %>
+              <div class="flex gap-1">
+                <%= unless @editing_team_id == team.id do %>
+                  <button phx-click="edit_team_name" phx-value-id={team.id}
+                          class="text-blue-500 hover:text-blue-700 p-1 hover:bg-blue-50 rounded-lg transition-colors">
+                    <.icon name="hero-pencil-square" class="h-5 w-5" />
+                  </button>
+                <% end %>
+                <button phx-click="delete_team" phx-value-id={team.id}
+                        class="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                  <.icon name="hero-trash" class="h-5 w-5" />
+                </button>
+              </div>
             </div>
             
             <div class="p-6">
