@@ -1,5 +1,8 @@
 <div class="container mx-auto px-4" phx-hook="GameView" id="game-view">
-  <h1 class="text-2xl font-bold mb-4">Game View - <%= @game_grid.name %></h1>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-lg font-medium text-gray-400"><%= @game_grid.name %></h1>
+    <span class="px-3 py-1 rounded-lg bg-gray-800 text-gray-400 text-sm">Game View</span>
+  </div>
   
   <%= if @game_grid.show_standings do %>
     <div class="flex flex-col items-center w-full max-w-4xl mx-auto">
