@@ -41,13 +41,9 @@ defmodule Jeoparty.Teams do
   end
 
   def subtract_points(%Team{} = team, points) when is_integer(points) do
-    if team.score - points >= 0 do
-      team
-      |> Team.changeset(%{score: team.score - points})
-      |> Repo.update()
-    else
-      {:error, :score_below_zero}
-    end
+    team
+    |> Team.changeset(%{score: team.score - points})
+    |> Repo.update()
   end
 
   def reset_points(%Team{} = team) do

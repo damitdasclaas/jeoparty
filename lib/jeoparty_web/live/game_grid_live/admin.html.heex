@@ -137,7 +137,7 @@
         </form>
       </div>
 
-      <%= for team <- @teams do %>
+      <%= for team <- Enum.sort_by(@teams, & &1.inserted_at) do %>
         <div class="bg-white p-6 rounded-xl shadow-lg">
           <div class="flex justify-between items-start mb-4">
             <h3 class="text-lg font-semibold"><%= team.name %></h3>
@@ -147,35 +147,31 @@
             </button>
           </div>
           
-          <div class="text-3xl font-bold text-center mb-4">
+          <div class="text-3xl font-bold text-center mb-6">
             $<%= team.score %>
           </div>
           
-          <div class="grid grid-cols-2 gap-2">
-            <button phx-click="add_points" phx-value-id={team.id} phx-value-points="100"
-                    class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors">
-              +$100
-            </button>
-            <button phx-click="subtract_points" phx-value-id={team.id} phx-value-points="100"
-                    class="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors">
-              -$100
-            </button>
-            <button phx-click="add_points" phx-value-id={team.id} phx-value-points="200"
-                    class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors">
-              +$200
-            </button>
-            <button phx-click="subtract_points" phx-value-id={team.id} phx-value-points="200"
-                    class="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors">
-              -$200
-            </button>
-            <button phx-click="add_points" phx-value-id={team.id} phx-value-points="300"
-                    class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors">
-              +$300
-            </button>
-            <button phx-click="subtract_points" phx-value-id={team.id} phx-value-points="300"
-                    class="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors">
-              -$300
-            </button>
+          <div class="space-y-4">
+            <div class="flex gap-2">
+              <button phx-click="subtract_points" phx-value-id={team.id} phx-value-points="100"
+                      class="flex-1 bg-red-500 text-white px-3 py-3 rounded-lg hover:bg-red-600 transition-colors text-lg font-semibold">
+                -$100
+              </button>
+              <button phx-click="add_points" phx-value-id={team.id} phx-value-points="100"
+                      class="flex-1 bg-green-500 text-white px-3 py-3 rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold">
+                +$100
+              </button>
+            </div>
+
+            <form phx-submit="add_custom_points" class="flex gap-2">
+              <input type="hidden" name="team_id" value={team.id}>
+              <input type="number" name="points" placeholder="Enter points" required
+                     class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+              <button type="submit" 
+                      class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                Add Points
+              </button>
+            </form>
           </div>
         </div>
       <% end %>

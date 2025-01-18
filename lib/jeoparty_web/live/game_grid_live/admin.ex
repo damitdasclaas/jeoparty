@@ -193,23 +193,43 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   end
 
   @impl true
+  def handle_event("add_custom_points", %{"team_id" => team_id, "points" => points}, socket) do
+    team = Teams.get_team!(team_id)
+    points = String.to_integer(points)
+
+    # If points is negative, subtract points, otherwise add points
+    {:ok, _team} = if points < 0 do
+      Teams.subtract_points(team, abs(points))
+    else
+      Teams.add_points(team, points)
+    end
+
+    teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+
+    # Broadcast team updates to all clients
+    PubSub.broadcast(
+      Jeoparty.PubSub,
+      "game_grid:#{socket.assigns.game_grid.id}",
+      {:teams_updated, teams}
+    )
+
+    {:noreply, assign(socket, :teams, teams)}
+  end
+
+  @impl true
   def handle_event("subtract_points", %{"id" => team_id, "points" => points}, socket) do
     team = Teams.get_team!(team_id)
-    case Teams.subtract_points(team, String.to_integer(points)) do
-      {:ok, _team} ->
-        teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+    {:ok, _team} = Teams.subtract_points(team, String.to_integer(points))
+    teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
 
-        # Broadcast team updates to all clients
-        PubSub.broadcast(
-          Jeoparty.PubSub,
-          "game_grid:#{socket.assigns.game_grid.id}",
-          {:teams_updated, teams}
-        )
+    # Broadcast team updates to all clients
+    PubSub.broadcast(
+      Jeoparty.PubSub,
+      "game_grid:#{socket.assigns.game_grid.id}",
+      {:teams_updated, teams}
+    )
 
-        {:noreply, assign(socket, :teams, teams)}
-      {:error, :score_below_zero} ->
-        {:noreply, socket}
-    end
+    {:noreply, assign(socket, :teams, teams)}
   end
 
   @impl true
@@ -288,6 +308,16 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   @impl true
   def handle_info({:teams_updated, teams}, socket) do
     {:noreply, assign(socket, :teams, teams)}
+  end
+
+  @impl true
+  def handle_info(:reset_game, socket) do
+    {:noreply,
+     socket
+     |> assign(:revealed_cells, MapSet.new())
+     |> assign(:viewed_cell_id, nil)
+     |> assign(:show_cell_details, false)
+     |> assign(:selected_cell, nil)}
   end
 
   defp get_cell(cells, row, col) do

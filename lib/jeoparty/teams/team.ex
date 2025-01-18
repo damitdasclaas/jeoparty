@@ -17,6 +17,5 @@ defmodule Jeoparty.Teams.Team do
     team
     |> cast(attrs, [:name, :score, :game_grid_id])
     |> validate_required([:name, :game_grid_id])
-    |> validate_number(:score, greater_than_or_equal_to: 0)
   end
 end
