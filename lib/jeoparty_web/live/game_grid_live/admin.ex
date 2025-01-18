@@ -25,6 +25,7 @@ defmodule JeopartyWeb.GameGridLive.Admin do
      |> assign(:show_cell_details, false)
      |> assign(:selected_cell, nil)
      |> assign(:show_add_team, false)
+     |> assign(:show_leaderboard, false)
      |> assign(:editing_team_id, nil)
      |> assign(:modal, nil)
      |> assign(:new_team_name, "")}
@@ -391,5 +392,10 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     Enum.find(cells, fn cell ->
       cell.row == row && cell.column == col
     end)
+  end
+
+  @impl true
+  def handle_event("toggle_leaderboard", _, socket) do
+    {:noreply, assign(socket, :show_leaderboard, !socket.assigns.show_leaderboard)}
   end
 end
