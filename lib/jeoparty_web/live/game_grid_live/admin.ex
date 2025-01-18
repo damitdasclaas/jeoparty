@@ -194,7 +194,59 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     {:noreply, assign(socket, :game_grid, game_grid)}
   end
 
-  # Add handler for standings_toggled event
+  # Add handlers for all PubSub events
+  @impl true
+  def handle_info({:cell_selected, cell}, socket) do
+    {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell.id)
+
+    {:noreply,
+     socket
+     |> assign(:game_grid, game_grid)
+     |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))
+     |> assign(:viewed_cell_id, cell.id)}
+  end
+
+  @impl true
+  def handle_info({:reveal_cell, cell}, socket) do
+    {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell.id)
+
+    {:noreply,
+     socket
+     |> assign(:game_grid, game_grid)
+     |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))}
+  end
+
+  @impl true
+  def handle_info({:hide_cell, cell}, socket) do
+    {:ok, game_grid} = GameGrids.hide_cell(socket.assigns.game_grid, cell.id)
+
+    {:noreply,
+     socket
+     |> assign(:game_grid, game_grid)
+     |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))}
+  end
+
+  @impl true
+  def handle_info({:preview_cell, cell}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_cell_details, true)
+     |> assign(:selected_cell, cell)}
+  end
+
+  @impl true
+  def handle_info({:close_preview, _}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_cell_details, false)
+     |> assign(:selected_cell, nil)}
+  end
+
+  @impl true
+  def handle_info({:view_toggled, cell}, socket) do
+    {:noreply, socket |> assign(:viewed_cell_id, cell && cell.id)}
+  end
+
   @impl true
   def handle_info({:standings_toggled, show_standings}, socket) do
     {:ok, game_grid} = GameGrids.update_game_grid(socket.assigns.game_grid, %{show_standings: show_standings})

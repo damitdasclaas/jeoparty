@@ -125,6 +125,14 @@ defmodule JeopartyWeb.GameGridLive.Game do
      |> assign(:teams, teams)}
   end
 
+  @impl true
+  def handle_info({:view_toggled, _}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_modal, false)
+     |> assign(:selected_cell, nil)}
+  end
+
   defp get_cell(cells, row, col) do
     row = if is_binary(row), do: String.to_integer(row), else: row
     col = if is_binary(col), do: String.to_integer(col), else: col
