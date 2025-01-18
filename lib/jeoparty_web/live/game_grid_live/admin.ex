@@ -180,6 +180,27 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     end
   end
 
+  @impl true
+  def handle_event("toggle_standings", _, socket) do
+    {:ok, game_grid} = GameGrids.toggle_standings(socket.assigns.game_grid)
+
+    # Broadcast the standings state change to all clients
+    PubSub.broadcast(
+      Jeoparty.PubSub,
+      "game_grid:#{socket.assigns.game_grid.id}",
+      {:standings_toggled, game_grid.show_standings}
+    )
+
+    {:noreply, assign(socket, :game_grid, game_grid)}
+  end
+
+  # Add handler for standings_toggled event
+  @impl true
+  def handle_info({:standings_toggled, show_standings}, socket) do
+    {:ok, game_grid} = GameGrids.update_game_grid(socket.assigns.game_grid, %{show_standings: show_standings})
+    {:noreply, assign(socket, :game_grid, game_grid)}
+  end
+
   defp get_cell(cells, row, col) do
     row = if is_binary(row), do: String.to_integer(row), else: row
     col = if is_binary(col), do: String.to_integer(col), else: col

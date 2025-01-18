@@ -2,6 +2,16 @@
   <h1 class="text-2xl font-bold mb-4">Admin Panel - <%= @game_grid.name %></h1>
 
   <div class="flex justify-end mb-4 gap-2">
+    <.button phx-click="toggle_standings" class={[
+      "transition-colors",
+      @game_grid.show_standings && "bg-purple-500 hover:bg-purple-600" || "bg-purple-700 hover:bg-purple-800"
+    ]}>
+      <%= if @game_grid.show_standings do %>
+        Hide Standings
+      <% else %>
+        Show Standings
+      <% end %>
+    </.button>
     <.button phx-click="hide_all" class="bg-red-500 hover:bg-red-600">
       Hide All Cells
     </.button>

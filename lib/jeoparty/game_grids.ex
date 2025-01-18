@@ -152,7 +152,9 @@ defmodule Jeoparty.GameGrids do
   Sets the currently viewed cell.
   """
   def set_viewed_cell(%GameGrid{} = game_grid, cell_id) do
-    update_game_grid(game_grid, %{viewed_cell_id: cell_id})
+    game_grid
+    |> GameGrid.changeset(%{viewed_cell_id: cell_id})
+    |> Repo.update()
   end
 
   @doc """
@@ -160,5 +162,23 @@ defmodule Jeoparty.GameGrids do
   """
   def hide_all_cells(%GameGrid{} = game_grid) do
     update_game_grid(game_grid, %{revealed_cell_ids: [], viewed_cell_id: nil})
+  end
+
+  def toggle_standings(%GameGrid{} = game_grid) do
+    game_grid
+    |> GameGrid.changeset(%{show_standings: !game_grid.show_standings})
+    |> Repo.update()
+  end
+
+  def show_standings(%GameGrid{} = game_grid) do
+    game_grid
+    |> GameGrid.changeset(%{show_standings: true})
+    |> Repo.update()
+  end
+
+  def hide_standings(%GameGrid{} = game_grid) do
+    game_grid
+    |> GameGrid.changeset(%{show_standings: false})
+    |> Repo.update()
   end
 end

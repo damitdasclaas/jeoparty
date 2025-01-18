@@ -1,6 +1,7 @@
 defmodule JeopartyWeb.GameGridLive.Game do
   use JeopartyWeb, :live_view
   alias Jeoparty.GameGrids
+  alias Jeoparty.Teams
   alias Phoenix.PubSub
 
   @impl true
@@ -11,11 +12,13 @@ defmodule JeopartyWeb.GameGridLive.Game do
 
     game_grid = GameGrids.get_game_grid!(grid_id)
     cells = GameGrids.get_cells_for_grid(grid_id)
+    teams = Teams.list_teams_for_game(grid_id)
 
     {:ok,
      socket
      |> assign(:game_grid, game_grid)
      |> assign(:cells, cells)
+     |> assign(:teams, teams)
      |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids || []))
      |> assign(:show_modal, false)
      |> assign(:selected_cell, nil)
@@ -112,8 +115,14 @@ defmodule JeopartyWeb.GameGridLive.Game do
   end
 
   @impl true
-  def handle_info({:view_toggled, _cell}, socket) do
-    {:noreply, socket}
+  def handle_info({:standings_toggled, show_standings}, socket) do
+    {:ok, game_grid} = GameGrids.update_game_grid(socket.assigns.game_grid, %{show_standings: show_standings})
+    teams = Teams.list_teams_for_game(socket.assigns.game_grid.id)
+
+    {:noreply,
+     socket
+     |> assign(:game_grid, game_grid)
+     |> assign(:teams, teams)}
   end
 
   defp get_cell(cells, row, col) do
