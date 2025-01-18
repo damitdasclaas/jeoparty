@@ -1,37 +1,89 @@
-<div class="container mx-auto px-4">
+<div class="container mx-auto px-4" phx-hook="GameView" id="game-view">
   <h1 class="text-2xl font-bold mb-4">Game View - <%= @game_grid.name %></h1>
   
   <%= if @game_grid.show_standings do %>
     <div class="flex flex-col items-center w-full max-w-4xl mx-auto">
       <h2 class="text-4xl font-bold mb-8 text-center">Leaderboard</h2>
-      <div class="w-full space-y-4">
-        <%= for {team, index} <- Enum.sort_by(@teams, & &1.score, :desc) |> Enum.with_index(1) do %>
+      <div class="w-full space-y-4" id="leaderboard">
+        <%= 
+          # Sort teams by score and group by score to handle ties
+          teams_with_ranks = @teams
+          |> Enum.sort_by(& &1.score, :desc)
+          |> Enum.chunk_by(& &1.score)
+          |> Enum.with_index(1)
+          |> Enum.flat_map(fn {group, rank} -> 
+            Enum.map(group, fn team -> {team, rank} end)
+          end)
+
+          for {team, rank} <- teams_with_ranks do 
+        %>
           <div class={[
-            "transform transition-all duration-300 hover:scale-[1.02]",
+            "transform transition-all duration-500 hover:scale-[1.02]",
             "rounded-xl shadow-2xl p-6",
-            case index do
+            # Different sizes based on rank
+            case rank do
+              1 -> "scale-110 -mx-4"
+              2 -> "scale-105 -mx-2"
+              3 -> "scale-[1.02] -mx-1"
+              _ -> ""
+            end,
+            # Colors based on rank
+            case rank do
               1 -> "bg-gradient-to-br from-yellow-500 to-yellow-600"
               2 -> "bg-gradient-to-br from-gray-400 to-gray-500"
               3 -> "bg-gradient-to-br from-amber-600 to-amber-700"
               _ -> "bg-gradient-to-br from-blue-500 to-blue-700"
             end
-          ]}>
+          ]} 
+          id={"team-#{team.id}"} 
+          data-team-id={team.id}
+          data-score={team.score}
+          phx-hook="AnimateScore">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-4">
                 <div class={[
-                  "w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold",
-                  case index do
+                  "rounded-full flex items-center justify-center font-bold",
+                  # Different sizes for rank badge based on position
+                  case rank do
+                    1 -> "w-14 h-14 text-3xl"
+                    2 -> "w-12 h-12 text-2xl"
+                    3 -> "w-11 h-11 text-xl"
+                    _ -> "w-10 h-10 text-lg"
+                  end,
+                  case rank do
                     1 -> "bg-yellow-400 text-yellow-900"
                     2 -> "bg-gray-300 text-gray-800"
                     3 -> "bg-amber-500 text-amber-900"
                     _ -> "bg-blue-400 text-blue-900"
                   end
                 ]}>
-                  <%= index %>
+                  <%= rank %>
                 </div>
-                <h3 class="text-2xl font-bold text-white"><%= team.name %></h3>
+                <h3 class={[
+                  "font-bold text-white",
+                  # Different text sizes based on rank
+                  case rank do
+                    1 -> "text-3xl"
+                    2 -> "text-2xl"
+                    3 -> "text-xl"
+                    _ -> "text-lg"
+                  end
+                ]}>
+                  <%= team.name %>
+                </h3>
               </div>
-              <div class="text-3xl font-bold text-white">$<%= team.score %></div>
+              <div class={[
+                "font-bold text-white",
+                # Different score sizes based on rank
+                case rank do
+                  1 -> "text-4xl"
+                  2 -> "text-3xl"
+                  3 -> "text-2xl"
+                  _ -> "text-xl"
+                end
+              ]}>
+                $<%= team.score %>
+              </div>
             </div>
           </div>
         <% end %>
@@ -102,9 +154,9 @@
   <% end %>
 
   <%= if @show_modal && @selected_cell do %>
-    <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+    <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-[fade-in_0.2s_ease-out]"
          phx-click="close_modal">
-      <div class="bg-gradient-to-br from-blue-500 to-blue-700 p-12 rounded-xl shadow-2xl w-[90vw] h-[80vh] mx-4 text-white transform transition-all duration-300 scale-100"
+      <div class="bg-gradient-to-br from-blue-500 to-blue-700 p-12 rounded-xl shadow-2xl w-[90vw] h-[80vh] mx-4 text-white animate-[scale-in_0.3s_ease-out]"
            phx-click-away="close_modal">
         <div class="flex flex-col items-center justify-center h-full space-y-8">
           <%= case @selected_cell.type do %>
