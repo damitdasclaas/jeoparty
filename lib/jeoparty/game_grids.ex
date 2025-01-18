@@ -105,13 +105,13 @@ defmodule Jeoparty.GameGrids do
 
   def get_cells_for_grid(grid_id) do
     require Logger
-    Logger.info("Fetching cells for grid: #{grid_id}")
+    #Logger.info("Fetching cells for grid: #{grid_id}")
 
     query = from c in Cell,
       where: c.game_grid_id == ^grid_id
 
     cells = Repo.all(query)
-    Logger.info("Found cells: #{inspect(cells)}")
+    #Logger.info("Found cells: #{inspect(cells)}")
 
     cells
   end
