@@ -1,9 +1,16 @@
 <.header>
   <%= @game_grid.name %>
   <:actions>
-    <.link patch={~p"/game_grids/#{@game_grid}/show/edit"} phx-click={JS.push_focus()}>
-      <.button>Edit game_grid</.button>
-    </.link>
+    <div class="flex items-center gap-4">
+      <button onclick={"window.open('/game_grids/#{@game_grid.id}/game', 'game', 'width=1200,height=800'); window.open('/game_grids/#{@game_grid.id}/admin', 'admin', 'width=1200,height=800')"}
+              class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors">
+        <.icon name="hero-play" class="h-5 w-5"/>
+        Start Game
+      </button>
+      <.link patch={~p"/game_grids/#{@game_grid}/show/edit"} phx-click={JS.push_focus()}>
+        <.button>Edit game_grid</.button>
+      </.link>
+    </div>
   </:actions>
 </.header>
 
