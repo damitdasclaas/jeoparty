@@ -420,6 +420,29 @@
                   </div>
                 </div>
               <% end %>
+            <% "audio" -> %>
+              <%= if @selected_cell.data["audio_url"] do %>
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-medium text-gray-400">Audio</h4>
+                    <%= if String.starts_with?(@selected_cell.data["audio_url"], "/uploads/") do %>
+                      <a href={@selected_cell.data["audio_url"]} 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
+                        <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4"/>
+                        <span>Open in new tab</span>
+                      </a>
+                    <% end %>
+                  </div>
+                  <div class="rounded-lg overflow-hidden bg-gray-700 p-4">
+                    <audio controls class="w-full">
+                      <source src={@selected_cell.data["audio_url"]} type="audio/mpeg">
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+                </div>
+              <% end %>
             <% _ -> %>
           <% end %>
         </div>

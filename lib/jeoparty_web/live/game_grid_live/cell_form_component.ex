@@ -20,6 +20,11 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         accept: ~w(.mp4 .webm .mov),
         max_entries: 1,
         max_file_size: 50_000_000  # 50MB limit for videos
+     )
+     |> allow_upload(:audio_upload,
+        accept: ~w(.mp3),
+        max_entries: 1,
+        max_file_size: 20_000_000  # 20MB limit for audio
      )}
   end
 
@@ -27,7 +32,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   def render(assigns) do
     assigns = assign_new(assigns, :points, fn -> nil end)
     ~H"""
-    <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-xl p-6">
+    <div class="max-w-2xl mx-auto bg-gray-800 rounded-xl p-6">
       <.header class="mb-8">
         <%= header_text(assigns) %>
       </.header>
@@ -41,20 +46,20 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         class="space-y-6"
       >
         <%= if !assigns[:selected_row] || assigns.selected_row != 1 do %>
-          <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
+          <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
             <.input
               field={@form[:type]}
               type="select"
               label="Type"
               prompt="Choose a type"
-              options={[{"Text", "text"}, {"Picture", "picture"}, {"Video", "video"}]}
+              options={[{"Text", "text"}, {"Picture", "picture"}, {"Video", "video"}, {"Audio", "audio"}]}
               class="w-full"
             />
           </div>
 
           <%= case input_value(@form, :type) do %>
             <% "text" -> %>
-              <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
+              <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
                 <.input
                   field={@form[:question]}
                   type="text"
@@ -62,7 +67,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                 />
               </div>
             <% "picture" -> %>
-              <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-4 border border-gray-100 dark:border-gray-700">
+              <div class="bg-gray-900 rounded-lg p-4 space-y-4 border border-gray-700">
                 <.input
                   field={@form[:question]}
                   type="text"
@@ -130,7 +135,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                     <%= if @editing_cell && @editing_cell.data["image_url"] && String.starts_with?(@editing_cell.data["image_url"], "/uploads/") do %>
                       <div class="mt-4 rounded-lg overflow-hidden shadow-lg">
                         <img src={@editing_cell.data["image_url"]} alt="Current Image" class="w-full h-48 object-cover"/>
-                        <div class="bg-gray-100 dark:bg-gray-700 p-2 text-sm text-center text-gray-600 dark:text-gray-300">
+                        <div class="bg-gray-700 p-2 text-sm text-center text-gray-300">
                           Current Image
                         </div>
                       </div>
@@ -143,7 +148,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                 <% end %>
               </div>
             <% "video" -> %>
-              <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-4 border border-gray-100 dark:border-gray-700">
+              <div class="bg-gray-900 rounded-lg p-4 space-y-4 border border-gray-700">
                 <.input
                   field={@form[:question]}
                   type="text"
@@ -187,12 +192,12 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                     label="Video URL"
                     placeholder="YouTube or Vimeo URL recommended"
                   />
-                  <div class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <div class="mt-1 text-sm text-gray-400">
                     For best results, use YouTube or Vimeo links. Other platforms may have inconsistent behavior.
                   </div>
                   <% video_url = Phoenix.HTML.Form.input_value(@form, :video_url) %>
                   <%= if video_url && video_url != "" do %>
-                    <div class="mt-4 rounded-lg overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-900">
+                    <div class="mt-4 rounded-lg overflow-hidden shadow-lg bg-gray-700">
                       <div class="aspect-w-16 aspect-h-9">
                         <%= case EmbedConverter.convert_url(video_url) do %>
                           <% {:ok, embed_url} -> %>
@@ -204,7 +209,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                               allowfullscreen
                             ></iframe>
                           <% {:error, _} -> %>
-                            <div class="p-4 text-center text-gray-600 dark:text-gray-400">
+                            <div class="p-4 text-center text-gray-400">
                               Video preview not available. Please check if the URL is correct.
                             </div>
                         <% end %>
@@ -217,8 +222,8 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
 
                     <%= for entry <- @uploads.video_upload.entries do %>
                       <div class="space-y-4">
-                        <div class="mt-4 rounded-lg overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-900">
-                          <div class="p-4 text-center text-gray-600 dark:text-gray-400">
+                        <div class="mt-4 rounded-lg overflow-hidden shadow-lg bg-gray-700">
+                          <div class="p-4 text-center text-gray-400">
                             Selected video: <%= entry.client_name %>
                           </div>
                         </div>
@@ -235,7 +240,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                           <source src={@editing_cell.data["video_url"]} type="video/mp4">
                           Your browser does not support the video tag.
                         </video>
-                        <div class="bg-gray-100 dark:bg-gray-700 p-2 text-sm text-center text-gray-600 dark:text-gray-300">
+                        <div class="bg-gray-700 p-2 text-sm text-center text-gray-300">
                           Current Video
                         </div>
                       </div>
@@ -247,8 +252,51 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                   </div>
                 <% end %>
               </div>
+            <% "audio" -> %>
+              <div class="bg-gray-900 rounded-lg p-4 space-y-4 border border-gray-700">
+                <.input
+                  field={@form[:question]}
+                  type="text"
+                  label="Question"
+                />
+
+                <div class="mt-2 space-y-4">
+                  <label class="block text-sm font-medium text-gray-200 mb-2">Audio File (MP3)</label>
+                  <.live_file_input upload={@uploads.audio_upload} class="w-full" />
+
+                  <%= for entry <- @uploads.audio_upload.entries do %>
+                    <div class="space-y-4">
+                      <div class="mt-4 rounded-lg overflow-hidden shadow-lg bg-gray-700">
+                        <div class="p-4 text-center text-gray-400">
+                          Selected audio: <%= entry.client_name %>
+                        </div>
+                      </div>
+
+                      <%= for err <- upload_errors(@uploads.audio_upload, entry) do %>
+                        <div class="mt-1 text-red-500 text-sm"><%= error_to_string(err) %></div>
+                      <% end %>
+                    </div>
+                  <% end %>
+
+                  <%= if @editing_cell && @editing_cell.data["audio_url"] && String.starts_with?(@editing_cell.data["audio_url"], "/uploads/") do %>
+                    <div class="mt-4 rounded-lg overflow-hidden shadow-lg">
+                      <audio controls class="w-full">
+                        <source src={@editing_cell.data["audio_url"]} type="audio/mpeg">
+                        Your browser does not support the audio element.
+                      </audio>
+                      <div class="bg-gray-700 p-2 text-sm text-center text-gray-300">
+                        Current Audio
+                      </div>
+                    </div>
+                  <% end %>
+
+                  <%= for err <- upload_errors(@uploads.audio_upload) do %>
+                    <div class="mt-1 text-red-500 text-sm"><%= error_to_string(err) %></div>
+                  <% end %>
+                </div>
+              </div>
             <% _ -> %>
-              <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
+              <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
                 <.input
                   field={@form[:question]}
                   type="text"
@@ -257,7 +305,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
               </div>
           <% end %>
 
-          <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-4 border border-gray-100 dark:border-gray-700">
+          <div class="bg-gray-900 rounded-lg p-4 space-y-4 border border-gray-700">
             <.input
               field={@form[:answer]}
               type="text"
@@ -276,7 +324,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
             </div>
 
             <%= if @show_source do %>
-              <div class="pl-4 border-l-2 border-gray-200 dark:border-gray-700">
+              <div class="pl-4 border-l-2 border-gray-700">
                 <.input
                   field={@form[:answer_source_url]}
                   type="text"
@@ -294,7 +342,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
             />
           </div>
         <% else %>
-          <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
+          <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
             <.input
               field={@form[:question]}
               type="text"
@@ -389,6 +437,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   def handle_event("save", %{"cell" => params}, socket) do
     uploaded_image_url = handle_image_upload(socket)
     uploaded_video_url = handle_video_upload(socket)
+    uploaded_audio_url = handle_audio_upload(socket)
 
     # Determine final image URL based on input type and uploads
     image_url = case socket.assigns.image_input_type do
@@ -412,6 +461,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         "points" => if(params["points"] == "", do: nil, else: params["points"]),
         "image_url" => image_url,
         "video_url" => video_url,
+        "audio_url" => uploaded_audio_url || (socket.assigns[:editing_cell] && socket.assigns.editing_cell.data["audio_url"]),
         "answer" => params["answer"],
         "answer_source_url" => params["answer_source_url"]
       }
@@ -522,6 +572,21 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
     end
   end
 
+  defp handle_audio_upload(socket) do
+    case uploaded_entries(socket, :audio_upload) do
+      [] ->
+        nil
+      _entries ->
+        consume_uploaded_entries(socket, :audio_upload, fn %{path: path}, entry ->
+          dest = Path.join(["priv", "static", "uploads", filename(entry)])
+          File.mkdir_p!(Path.dirname(dest))
+          File.cp!(path, dest)
+          {:ok, "/uploads/" <> filename(entry)}
+        end)
+        |> List.first()
+    end
+  end
+
   defp filename(entry) do
     [ext | _] = MIME.extensions(entry.client_type)
     "#{entry.uuid}.#{ext}"
@@ -531,6 +596,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
     socket
     |> validate_image_upload()
     |> validate_video_upload()
+    |> validate_audio_upload()
   end
 
   defp validate_image_upload(socket) do
@@ -571,6 +637,21 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
       _ ->
         socket
     end
+  end
+
+  defp validate_audio_upload(socket) do
+    {socket, valid?} =
+      Enum.reduce(socket.assigns.uploads.audio_upload.entries, {socket, true}, fn entry, {socket, _valid?} ->
+        case entry.client_type do
+          type when type in ~w(audio/mpeg) ->
+            {socket, true}
+          _other ->
+            {socket
+             |> put_flash(:error, "Invalid file type. Please upload an MP3 file."),
+             false}
+        end
+      end)
+    if valid?, do: socket, else: cancel_upload(socket, :audio_upload)
   end
 
   defp cancel_upload(socket, upload_name) do

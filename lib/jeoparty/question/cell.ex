@@ -5,7 +5,7 @@ defmodule Jeoparty.Question.Cell do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
-  @cell_types ["text", "picture", "video"]
+  @cell_types ["text", "picture", "video", "audio"]
 
   schema "question_cells" do
     field :data, :map
