@@ -6,33 +6,35 @@ defmodule JeopartyWeb.UserResetPasswordLive do
   def render(assigns) do
     ~H"""
     <div class="mx-auto max-w-sm">
-      <.header class="text-center">Reset Password</.header>
+      <.header class="text-center text-gray-200">Reset Password</.header>
 
       <.simple_form
         for={@form}
         id="reset_password_form"
         phx-submit="reset_password"
         phx-change="validate"
+        class="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700"
       >
-        <.error :if={@form.errors != []}>
+        <.error :if={@form.errors != []} class="text-red-400">
           Oops, something went wrong! Please check the errors below.
         </.error>
 
-        <.input field={@form[:password]} type="password" label="New password" required />
+        <.input field={@form[:password]} type="password" label="New password" required class="bg-gray-700 text-gray-200 border-gray-600" />
         <.input
           field={@form[:password_confirmation]}
           type="password"
           label="Confirm new password"
           required
+          class="bg-gray-700 text-gray-200 border-gray-600"
         />
         <:actions>
-          <.button phx-disable-with="Resetting..." class="w-full">Reset Password</.button>
+          <.button phx-disable-with="Resetting..." class="w-full bg-blue-600 hover:bg-blue-700">Reset Password</.button>
         </:actions>
       </.simple_form>
 
-      <p class="text-center text-sm mt-4">
-        <.link href={~p"/users/register"}>Register</.link>
-        | <.link href={~p"/users/log_in"}>Log in</.link>
+      <p class="text-center text-sm mt-4 text-gray-400">
+        <.link href={~p"/users/register"} class="text-blue-400 hover:text-blue-300 hover:underline">Register</.link>
+        | <.link href={~p"/users/log_in"} class="text-blue-400 hover:text-blue-300 hover:underline">Log in</.link>
       </p>
     </div>
     """
