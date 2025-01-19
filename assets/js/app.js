@@ -27,13 +27,64 @@ const Hooks = {
   AnimateScore: {
     mounted() {
       this.handleScoreChange();
+      this.lastScore = parseInt(this.el.dataset.score);
+      this.lastPosition = this.el.getBoundingClientRect().top;
+      this.lastRank = this.getRank();
     },
     updated() {
       this.handleScoreChange();
+      this.handlePositionChange();
+    },
+    getRank() {
+      // Get rank from the parent's data attribute or compute it from position
+      return parseInt(this.el.closest('[data-rank]')?.dataset.rank) || 
+             Math.floor(this.el.getBoundingClientRect().top / 100);
     },
     handleScoreChange() {
-      // Ensure all transform properties are included in the transition
-      this.el.style.transition = 'transform 0.5s ease-out, scale 0.5s ease-out';
+      const newScore = parseInt(this.el.dataset.score);
+      
+      if (this.lastScore !== undefined && newScore !== this.lastScore) {
+        // Remove any existing animation classes
+        this.el.classList.remove('score-change', 'score-decrease');
+        
+        // Force a reflow to ensure the animation triggers again
+        void this.el.offsetWidth;
+        
+        // Add appropriate animation class based on score change
+        if (newScore > this.lastScore) {
+          this.el.classList.add('score-change');
+        } else if (newScore < this.lastScore) {
+          this.el.classList.add('score-decrease');
+        }
+      }
+      
+      this.lastScore = newScore;
+    },
+    handlePositionChange() {
+      const newPosition = this.el.getBoundingClientRect().top;
+      const newRank = this.getRank();
+      
+      if (this.lastPosition !== undefined && 
+          this.lastRank !== undefined && 
+          (newPosition !== this.lastPosition || newRank !== this.lastRank)) {
+        
+        // Remove existing animation classes
+        this.el.classList.remove('position-changed');
+        
+        // Force a reflow
+        void this.el.offsetWidth;
+        
+        // Add animation classes
+        this.el.classList.add('position-transition', 'position-changed');
+        
+        // Remove the animation class after it completes
+        setTimeout(() => {
+          this.el.classList.remove('position-changed');
+        }, 600);
+      }
+      
+      this.lastPosition = newPosition;
+      this.lastRank = newRank;
     }
   },
   GameView: {

@@ -46,6 +46,7 @@
               <div class={[
                 "transform transition-all duration-500 hover:scale-[1.02]",
                 "rounded-xl shadow-2xl p-8",
+                "leaderboard-entry",
                 # Different sizes based on rank
                 case rank do
                   1 -> "-mx-8"
@@ -64,6 +65,7 @@
               id={"team-#{team.id}"} 
               data-team-id={team.id}
               data-score={team.score}
+              data-rank={rank}
               phx-hook="AnimateScore">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-4">
