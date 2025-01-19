@@ -35,6 +35,27 @@
   }
 }
 
+@keyframes leaderboardEntryAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Initial state for leaderboard entries */
+.team-entry {
+  opacity: 0;
+}
+
+.team-entry.animate {
+  animation: leaderboardEntryAppear 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation-delay: var(--delay);
+}
+
 @keyframes bounce {
   0%, 100% {
     transform: translateY(0);

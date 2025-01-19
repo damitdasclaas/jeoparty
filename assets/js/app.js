@@ -117,15 +117,23 @@ const Hooks = {
       }
       
       if (standings && animate) {
-        standings.style.opacity = "0";
+        const teams = standings.querySelectorAll("#leaderboard > div");
+        const totalTeams = teams.length;
+        
+        // Reset all animations first
+        teams.forEach(team => {
+          team.classList.remove('animate');
+          team.classList.add('team-entry');
+        });
+        
+        // Force a reflow
+        void standings.offsetWidth;
+        
+        // Start animations with staggered delays
         requestAnimationFrame(() => {
-          standings.style.opacity = "1";
-          standings.classList.add("standings-view");
-          const teams = standings.querySelectorAll("#leaderboard > div");
-          const totalTeams = teams.length;
           teams.forEach((team, index) => {
-            team.classList.add("team-entry");
-            team.style.setProperty('--delay', `${(totalTeams - index - 1) * 0.1}s`);
+            team.style.setProperty('--delay', `${index * 0.1}s`);
+            team.classList.add('animate');
           });
         });
       }
