@@ -18,17 +18,27 @@
 
 <div class="container mx-auto px-4 py-8">
   <div class="flex flex-col gap-6">
-    <div class="flex items-center gap-4">
-      <button onclick={"window.open('/game_grids/#{@game_grid.id}/game', '_blank'); window.open('/game_grids/#{@game_grid.id}/admin', '_blank')"}
-              class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors">
-        <.icon name="hero-play" class="h-5 w-5"/>
-        Start Game
-      </button>
-
+    <div class="flex items-center justify-between gap-4">
       <.link href={~p"/game_grids"} class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors">
-        <.icon name="hero-squares-2x2" class="h-5 w-5"/>
-        All Games
+        <.icon name="hero-arrow-left" class="h-5 w-5"/>
+        Back to Game List
       </.link>
+
+      <div class="flex items-center gap-4">
+        <button 
+          phx-click={show_modal("game-info")}
+          class="bg-gray-600 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+        >
+          <.icon name="hero-question-mark-circle" class="h-5 w-5"/>
+          Info
+        </button>
+
+        <button onclick={"window.open('/game_grids/#{@game_grid.id}/game', '_blank'); window.open('/game_grids/#{@game_grid.id}/admin', '_blank')"}
+                class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors">
+          <.icon name="hero-play" class="h-5 w-5"/>
+          Start Game
+        </button>
+      </div>
     </div>
 
     <!-- Game Grid Preview -->
@@ -253,4 +263,22 @@
     editing_cell={@editing_cell}
     points={@points}
   />
+</.modal>
+
+<.modal id="game-info" show={false}>
+  <h2 class="text-xl font-bold mb-4">How to Play</h2>
+  <div class="space-y-4 text-gray-300">
+    <p>When you click <strong>Start Game</strong>, two windows will open:</p>
+    <ul class="list-disc list-inside space-y-2 ml-4">
+      <li><strong>Game View</strong> - This is the main display that players will see. It shows the game board and questions.</li>
+      <li><strong>Admin Panel</strong> - This is your control panel where you can:
+        <ul class="list-disc list-inside ml-6 mt-2 text-gray-400">
+          <li>Reveal questions and answers</li>
+          <li>Control the game flow</li>
+          <li>Manage scores</li>
+        </ul>
+      </li>
+    </ul>
+    <p class="mt-4">Position the Game View where players can see it (like a shared screen or projector) and keep the Admin Panel on your personal screen.</p>
+  </div>
 </.modal>
