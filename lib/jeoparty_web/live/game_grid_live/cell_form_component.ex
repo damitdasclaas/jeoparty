@@ -524,6 +524,12 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   end
 
   @impl true
+  def handle_event("select_correct_option", %{"option" => option}, socket) do
+    option = String.to_integer(option)
+    {:noreply, assign(socket, :selected_correct_option, option)}
+  end
+
+  @impl true
   def handle_event("validate", %{"cell" => params}, socket) do
     # Always preserve the current type
     current_type = params["type"] || socket.assigns.current_type
@@ -817,11 +823,4 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
     end
   end
   defp get_image_url(_), do: nil
-
-  # Add handler for correct option selection
-  @impl true
-  def handle_event("select_correct_option", %{"option" => option}, socket) do
-    option = String.to_integer(option)
-    {:noreply, assign(socket, :selected_correct_option, option)}
-  end
 end

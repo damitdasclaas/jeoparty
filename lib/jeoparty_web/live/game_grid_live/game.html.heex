@@ -140,7 +140,11 @@
           <div class="absolute top-3 left-3 right-3 flex items-center justify-between text-blue-200/80 text-sm">
             <div class="flex items-center gap-2">
               <.icon name="hero-tag" class="h-4 w-4"/>
-              <%= get_cell(@cells, 1, @selected_cell.column).data["question"] %>
+              <%= if category_cell = get_cell(@cells, 1, @selected_cell.column) do %>
+                <%= category_cell.data["question"] %>
+              <% else %>
+                No category
+              <% end %>
             </div>
             <div class="flex items-center gap-2">
               <.icon name="hero-currency-dollar" class="h-4 w-4"/>

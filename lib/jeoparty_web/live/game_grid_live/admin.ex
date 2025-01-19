@@ -319,6 +319,22 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     {:noreply, assign(socket, :editing_team_id, nil)}
   end
 
+  @impl true
+  def handle_event("delete_all_teams", _params, socket) do
+    Enum.each(socket.assigns.teams, fn team ->
+      Jeoparty.Teams.delete_team(team)
+    end)
+
+    # Broadcast team updates to all clients
+    PubSub.broadcast(
+      Jeoparty.PubSub,
+      "game_grid:#{socket.assigns.game_grid.id}",
+      {:teams_updated, []}
+    )
+
+    {:noreply, assign(socket, teams: [])}
+  end
+
   # Add handlers for all PubSub events
   @impl true
   def handle_info({:cell_selected, cell}, socket) do
@@ -399,22 +415,6 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   def handle_info({:reload_game_view, _}, socket) do
     # Ignore the reload event in admin view
     {:noreply, socket}
-  end
-
-  @impl true
-  def handle_event("delete_all_teams", _params, socket) do
-    Enum.each(socket.assigns.teams, fn team ->
-      Jeoparty.Teams.delete_team(team)
-    end)
-
-    # Broadcast team updates to all clients
-    PubSub.broadcast(
-      Jeoparty.PubSub,
-      "game_grid:#{socket.assigns.game_grid.id}",
-      {:teams_updated, []}
-    )
-
-    {:noreply, assign(socket, teams: [])}
   end
 
   defp get_cell(cells, row, col) do
