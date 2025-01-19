@@ -5,16 +5,22 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
 
   alias Jeoparty.Question.Cell
   alias Jeoparty.GameGrids
+  alias JeopartyWeb.EmbedConverter
 
   @impl true
   def mount(socket) do
     {:ok,
      socket
-     |> assign(show_source: false, image_input_type: "url")
+     |> assign(show_source: false, image_input_type: "url", video_input_type: "url")
      |> allow_upload(:image_upload,
         accept: ~w(.jpg .jpeg .png .gif),
         max_entries: 1,
         max_file_size: 10_000_000
+     )
+     |> allow_upload(:video_upload,
+        accept: ~w(.mp4 .webm .mov),
+        max_entries: 1,
+        max_file_size: 50_000_000  # 50MB limit for videos
      )}
   end
 
@@ -144,12 +150,100 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                   type="text"
                   label="Question"
                 />
-                <.input
-                  field={@form[:video_url]}
-                  type="text"
-                  label="Video URL"
-                  placeholder="YouTube or Vimeo URL"
-                />
+
+                <div class="flex items-center gap-4 mb-4">
+                  <label class="text-sm font-medium">Video Source:</label>
+                  <div class="flex items-center gap-2">
+                    <label class="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="video_input_type"
+                        value="url"
+                        checked={@video_input_type == "url"}
+                        phx-click="toggle_video_input"
+                        phx-target={@myself}
+                        class="form-radio"
+                      />
+                      <span class="ml-2">URL</span>
+                    </label>
+                    <label class="inline-flex items-center ml-4">
+                      <input
+                        type="radio"
+                        name="video_input_type"
+                        value="upload"
+                        checked={@video_input_type == "upload"}
+                        phx-click="toggle_video_input"
+                        phx-target={@myself}
+                        class="form-radio"
+                      />
+                      <span class="ml-2">Upload</span>
+                    </label>
+                  </div>
+                </div>
+
+                <%= if @video_input_type == "url" do %>
+                  <.input
+                    field={@form[:video_url]}
+                    type="text"
+                    label="Video URL"
+                    placeholder="YouTube, Vimeo, or other video URL"
+                  />
+                  <% video_url = Phoenix.HTML.Form.input_value(@form, :video_url) %>
+                  <%= if video_url && video_url != "" do %>
+                    <div class="mt-4 rounded-lg overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-900">
+                      <div class="aspect-w-16 aspect-h-9">
+                        <%= case EmbedConverter.convert_url(video_url) do %>
+                          <% {:ok, embed_url} -> %>
+                            <iframe
+                              src={embed_url}
+                              class="w-full h-full"
+                              frameborder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowfullscreen
+                            ></iframe>
+                          <% {:error, _} -> %>
+                            <div class="p-4 text-center text-gray-600 dark:text-gray-400">
+                              Video preview not available. Please check if the URL is correct.
+                            </div>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+                <% else %>
+                  <div class="mt-2 space-y-4">
+                    <.live_file_input upload={@uploads.video_upload} class="w-full" />
+
+                    <%= for entry <- @uploads.video_upload.entries do %>
+                      <div class="space-y-4">
+                        <div class="mt-4 rounded-lg overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-900">
+                          <div class="p-4 text-center text-gray-600 dark:text-gray-400">
+                            Selected video: <%= entry.client_name %>
+                          </div>
+                        </div>
+
+                        <%= for err <- upload_errors(@uploads.video_upload, entry) do %>
+                          <div class="mt-1 text-red-500 text-sm"><%= error_to_string(err) %></div>
+                        <% end %>
+                      </div>
+                    <% end %>
+
+                    <%= if @editing_cell && @editing_cell.data["video_url"] && String.starts_with?(@editing_cell.data["video_url"], "/uploads/") do %>
+                      <div class="mt-4 rounded-lg overflow-hidden shadow-lg">
+                        <video controls class="w-full">
+                          <source src={@editing_cell.data["video_url"]} type="video/mp4">
+                          Your browser does not support the video tag.
+                        </video>
+                        <div class="bg-gray-100 dark:bg-gray-700 p-2 text-sm text-center text-gray-600 dark:text-gray-300">
+                          Current Video
+                        </div>
+                      </div>
+                    <% end %>
+
+                    <%= for err <- upload_errors(@uploads.video_upload) do %>
+                      <div class="mt-1 text-red-500 text-sm"><%= error_to_string(err) %></div>
+                    <% end %>
+                  </div>
+                <% end %>
               </div>
             <% _ -> %>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
@@ -225,14 +319,16 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   def update(assigns, socket) do
     initial_params = if assigns[:editing_cell] do
       image_url = assigns.editing_cell.data["image_url"]
+      video_url = assigns.editing_cell.data["video_url"]
       image_input_type = if image_url && String.starts_with?(image_url, "/uploads/"), do: "upload", else: "url"
+      video_input_type = if video_url && String.starts_with?(video_url, "/uploads/"), do: "upload", else: "url"
 
       %{
         "type" => assigns.editing_cell.type,
         "question" => assigns.editing_cell.data["question"],
         "points" => assigns.editing_cell.data["points"],
         "image_url" => if(image_input_type == "url", do: image_url, else: ""),
-        "video_url" => assigns.editing_cell.data["video_url"],
+        "video_url" => if(video_input_type == "url", do: video_url, else: ""),
         "answer" => assigns.editing_cell.data["answer"],
         "answer_source_url" => assigns.editing_cell.data["answer_source_url"]
       }
@@ -255,6 +351,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
      |> assign(assigns)
      |> assign(:editing_cell, assigns[:editing_cell])
      |> assign(:image_input_type, if(assigns[:editing_cell], do: if(String.starts_with?(assigns.editing_cell.data["image_url"] || "", "/uploads/"), do: "upload", else: "url"), else: "url"))
+     |> assign(:video_input_type, if(assigns[:editing_cell], do: if(String.starts_with?(assigns.editing_cell.data["video_url"] || "", "/uploads/"), do: "upload", else: "url"), else: "url"))
      |> assign_form(changeset)}
   end
 
@@ -266,6 +363,11 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   @impl true
   def handle_event("toggle_image_input", %{"value" => type}, socket) do
     {:noreply, assign(socket, image_input_type: type)}
+  end
+
+  @impl true
+  def handle_event("toggle_video_input", %{"value" => type}, socket) do
+    {:noreply, assign(socket, video_input_type: type)}
   end
 
   @impl true
@@ -284,6 +386,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   @impl true
   def handle_event("save", %{"cell" => params}, socket) do
     uploaded_image_url = handle_image_upload(socket)
+    uploaded_video_url = handle_video_upload(socket)
 
     attrs = %{
       row: socket.assigns.row,
@@ -294,7 +397,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         "question" => params["question"],
         "points" => if(params["points"] == "", do: nil, else: params["points"]),
         "image_url" => if(uploaded_image_url, do: uploaded_image_url, else: params["image_url"]),
-        "video_url" => params["video_url"],
+        "video_url" => if(uploaded_video_url, do: uploaded_video_url, else: params["video_url"]),
         "answer" => params["answer"],
         "answer_source_url" => params["answer_source_url"]
       }
@@ -379,12 +482,34 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
     end
   end
 
+  defp handle_video_upload(socket) do
+    case socket.assigns.video_input_type do
+      "upload" ->
+        consume_uploaded_entries(socket, :video_upload, fn %{path: path}, entry ->
+          dest = Path.join(["priv", "static", "uploads", filename(entry)])
+          File.mkdir_p!(Path.dirname(dest))
+          File.cp!(path, dest)
+          {:ok, "/uploads/" <> filename(entry)}
+        end)
+        |> List.first()
+
+      _ ->
+        nil
+    end
+  end
+
   defp filename(entry) do
     [ext | _] = MIME.extensions(entry.client_type)
     "#{entry.uuid}.#{ext}"
   end
 
   defp validate_upload(socket) do
+    socket
+    |> validate_image_upload()
+    |> validate_video_upload()
+  end
+
+  defp validate_image_upload(socket) do
     case socket.assigns.image_input_type do
       "upload" ->
         {socket, valid?} =
@@ -399,6 +524,26 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
             end
           end)
         if valid?, do: socket, else: cancel_upload(socket, :image_upload)
+      _ ->
+        socket
+    end
+  end
+
+  defp validate_video_upload(socket) do
+    case socket.assigns.video_input_type do
+      "upload" ->
+        {socket, valid?} =
+          Enum.reduce(socket.assigns.uploads.video_upload.entries, {socket, true}, fn entry, {socket, _valid?} ->
+            case entry.client_type do
+              type when type in ~w(video/mp4 video/webm video/quicktime) ->
+                {socket, true}
+              _other ->
+                {socket
+                 |> put_flash(:error, "Invalid file type. Please upload an MP4, WebM, or MOV file."),
+                 false}
+            end
+          end)
+        if valid?, do: socket, else: cancel_upload(socket, :video_upload)
       _ ->
         socket
     end
