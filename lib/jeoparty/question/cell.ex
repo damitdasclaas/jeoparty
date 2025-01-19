@@ -1,6 +1,7 @@
 defmodule Jeoparty.Question.Cell do
   use Ecto.Schema
   import Ecto.Changeset
+  alias JeopartyWeb.EmbedConverter
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -35,30 +36,11 @@ defmodule Jeoparty.Question.Cell do
       case get_change(changeset, :data) do
         %{"video_url" => url} when is_binary(url) ->
           data = get_change(changeset, :data)
-          put_change(changeset, :data, %{data | "video_url" => youtube_url_to_embed(url)})
+          put_change(changeset, :data, %{data | "video_url" => EmbedConverter.transform_video_url(url)})
         _ -> changeset
       end
     else
       changeset
-    end
-  end
-
-  defp youtube_url_to_embed(url) do
-    cond do
-      # Handle youtube.com/watch?v= URLs
-      video_id = Regex.run(~r/youtube\.com\/watch\?v=([^&]+)/, url) ->
-        "https://www.youtube.com/embed/#{Enum.at(video_id, 1)}"
-
-      # Handle youtu.be/ URLs
-      video_id = Regex.run(~r/youtu\.be\/([^?]+)/, url) ->
-        "https://www.youtube.com/embed/#{Enum.at(video_id, 1)}"
-
-      # Handle youtube.com/embed/ URLs (already in correct format)
-      Regex.match?(~r/youtube\.com\/embed\//, url) ->
-        url
-
-      # Return original URL if no match (might be another video platform)
-      true -> url
     end
   end
 

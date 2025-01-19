@@ -3,6 +3,7 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   alias Jeoparty.GameGrids
   alias Jeoparty.Teams
   alias Phoenix.PubSub
+  alias JeopartyWeb.EmbedConverter
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -38,8 +39,8 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   end
 
   @impl true
-  def handle_event("close_modal", _, socket) do
-    {:noreply, socket |> assign(:show_cell_details, false) |> assign(:selected_cell, nil)}
+  def handle_event("close_modal", _params, socket) do
+    {:noreply, assign(socket, show_cell_details: false, selected_cell: nil)}
   end
 
   @impl true

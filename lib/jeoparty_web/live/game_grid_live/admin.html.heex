@@ -146,47 +146,56 @@
         <.icon name={if @show_leaderboard, do: "hero-chevron-up", else: "hero-chevron-down"} class="h-5 w-5 text-yellow-400"/>
       </button>
 
-      <div class={[
-        "transition-all duration-300 overflow-hidden",
-        if(@show_leaderboard, do: "max-h-[300px]", else: "max-h-0")
-      ]}>
-        <div class="p-6 pt-2 space-y-3 overflow-y-auto max-h-[300px]">
-          <%= 
-            teams_with_ranks = @teams
-            |> Enum.sort_by(& &1.score, :desc)
-            |> Enum.chunk_by(& &1.score)
-            |> Enum.with_index(1)
-            |> Enum.flat_map(fn {group, rank} -> 
-              Enum.map(group, fn team -> {team, rank} end)
-            end)
+      <%= if @show_leaderboard do %>
+        <%= if @teams == [] do %>
+          <div class="p-6 text-center">
+            <.icon name="hero-user-group" class="h-8 w-8 text-gray-400 mx-auto mb-3"/>
+            <p class="text-gray-400">No teams have been added yet.</p>
+          </div>
+        <% else %>
+          <div class={[
+            "transition-all duration-300 overflow-hidden",
+            if(@show_leaderboard, do: "max-h-[300px]", else: "max-h-0")
+          ]}>
+            <div class="p-6 pt-2 space-y-3 overflow-y-auto max-h-[300px]">
+              <%= 
+                teams_with_ranks = @teams
+                |> Enum.sort_by(& &1.score, :desc)
+                |> Enum.chunk_by(& &1.score)
+                |> Enum.with_index(1)
+                |> Enum.flat_map(fn {group, rank} -> 
+                  Enum.map(group, fn team -> {team, rank} end)
+                end)
 
-            for {team, rank} <- teams_with_ranks do 
-          %>
-            <div class="flex items-center justify-between p-3 rounded-lg bg-gray-700/50">
-              <div class="flex items-center gap-3">
-                <div class={[
-                  "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-                  case rank do
-                    1 -> "bg-yellow-400 text-yellow-900"
-                    2 -> "bg-gray-300 text-gray-800"
-                    3 -> "bg-amber-500 text-amber-900"
-                    _ -> "bg-blue-400 text-blue-900"
-                  end
-                ]}>
-                  <%= rank %>
+                for {team, rank} <- teams_with_ranks do 
+              %>
+                <div class="flex items-center justify-between p-3 rounded-lg bg-gray-700/50">
+                  <div class="flex items-center gap-3">
+                    <div class={[
+                      "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
+                      case rank do
+                        1 -> "bg-yellow-400 text-yellow-900"
+                        2 -> "bg-gray-300 text-gray-800"
+                        3 -> "bg-amber-500 text-amber-900"
+                        _ -> "bg-blue-400 text-blue-900"
+                      end
+                    ]}>
+                      <%= rank %>
+                    </div>
+                    <span class="font-medium text-gray-100"><%= team.name %></span>
+                  </div>
+                  <span class={[
+                    "font-bold",
+                    if(team.score < 0, do: "text-red-400", else: "text-blue-400")
+                  ]}>
+                    $<%= team.score %>
+                  </span>
                 </div>
-                <span class="font-medium text-gray-100"><%= team.name %></span>
-              </div>
-              <span class={[
-                "font-bold",
-                if(team.score < 0, do: "text-red-400", else: "text-blue-400")
-              ]}>
-                $<%= team.score %>
-              </span>
+              <% end %>
             </div>
-          <% end %>
-        </div>
-      </div>
+          </div>
+        <% end %>
+      <% end %>
     </div>
 
     <!-- Add New Team -->
@@ -297,37 +306,131 @@
   </div>
 
   <%= if @show_cell_details && @selected_cell do %>
-    <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-         phx-click="close_modal">
-      <div class="bg-white p-8 rounded-xl shadow-2xl max-w-2xl w-full mx-4"
-           phx-click-away="close_modal">
-        <div class="space-y-4">
-          <div class="text-2xl font-bold text-blue-600">
-            $<%= @selected_cell.data["points"] || (@selected_cell.row - 1) * 100 %>
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <!-- Header -->
+        <div class="px-4 py-3 bg-gray-700 flex items-center justify-between flex-shrink-0">
+          <h3 class="text-lg font-bold text-gray-100">Cell Details</h3>
+          <button phx-click="close_modal" class="text-gray-400 hover:text-gray-200 transition-colors">
+            <.icon name="hero-x-mark" class="h-5 w-5"/>
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-4 space-y-4 overflow-y-auto">
+          <!-- Question -->
+          <div class="space-y-1">
+            <h4 class="text-sm font-medium text-gray-400">Question</h4>
+            <div class="p-3 bg-gray-700 rounded-lg text-gray-100">
+              <%= @selected_cell.data["question"] %>
+            </div>
           </div>
-          
-          <%= if @selected_cell.type == "picture" && @selected_cell.data["image_url"] do %>
-            <img src={@selected_cell.data["image_url"]} 
-                 alt={@selected_cell.data["question"]} 
-                 class="w-full h-48 object-contain rounded-lg bg-gray-100" />
-          <% end %>
-          
-          <%= if @selected_cell.type == "video" && @selected_cell.data["video_url"] do %>
-            <div class="w-full aspect-video bg-gray-100 rounded-lg overflow-hidden">
-              <iframe src={@selected_cell.data["video_url"]}
-                      class="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowfullscreen>
-              </iframe>
+
+          <!-- Answer -->
+          <div class="space-y-1">
+            <h4 class="text-sm font-medium text-gray-400">Answer</h4>
+            <div class="p-3 bg-gray-700 rounded-lg text-gray-100">
+              <%= @selected_cell.data["answer"] %>
+            </div>
+          </div>
+
+          <!-- Answer Source -->
+          <%= if @selected_cell.data["answer_source_url"] && @selected_cell.data["answer_source_url"] != "" do %>
+            <div class="space-y-1">
+              <h4 class="text-sm font-medium text-gray-400">Answer Source</h4>
+              <a href={@selected_cell.data["answer_source_url"]} 
+                 target="_blank" 
+                 rel="noopener noreferrer" 
+                 class="block p-3 bg-gray-700 rounded-lg text-blue-400 hover:text-blue-300 transition-colors break-all">
+                <div class="flex items-center gap-2">
+                  <.icon name="hero-link" class="h-4 w-4 flex-shrink-0"/>
+                  <span><%= @selected_cell.data["answer_source_url"] %></span>
+                </div>
+              </a>
             </div>
           <% end %>
 
-          <div class="text-xl font-medium">
-            Question: <%= @selected_cell.data["question"] %>
+          <!-- Points -->
+          <div class="space-y-1">
+            <h4 class="text-sm font-medium text-gray-400">Points</h4>
+            <div class="p-3 bg-gray-700 rounded-lg">
+              <span class="text-xl font-bold text-blue-400">$<%= @selected_cell.data["points"] || (@selected_cell.row - 1) * 100 %></span>
+            </div>
           </div>
-          <div class="text-lg text-gray-700">
-            Answer: <%= @selected_cell.data["answer"] %>
-          </div>
+
+          <!-- Media Preview -->
+          <%= case @selected_cell.type do %>
+            <% "picture" -> %>
+              <%= if @selected_cell.data["image_url"] do %>
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-medium text-gray-400">Image</h4>
+                    <a href={@selected_cell.data["image_url"]} 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
+                      <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4"/>
+                      <span>Open in new tab</span>
+                    </a>
+                  </div>
+                  <div class="rounded-lg overflow-hidden bg-gray-700">
+                    <img src={@selected_cell.data["image_url"]} alt="Question Image" class="w-full object-contain max-h-64"/>
+                  </div>
+                </div>
+              <% end %>
+            <% "video" -> %>
+              <%= if @selected_cell.data["video_url"] do %>
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-medium text-gray-400">Video</h4>
+                    <%= if String.starts_with?(@selected_cell.data["video_url"], "/uploads/") do %>
+                      <a href={@selected_cell.data["video_url"]} 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
+                        <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4"/>
+                        <span>Open in new tab</span>
+                      </a>
+                    <% end %>
+                  </div>
+                  <div class="rounded-lg overflow-hidden bg-gray-700">
+                    <div class="aspect-w-16 aspect-h-9">
+                      <%= if String.starts_with?(@selected_cell.data["video_url"], "/uploads/") do %>
+                        <video controls class="w-full">
+                          <source src={@selected_cell.data["video_url"]} type="video/mp4">
+                          Your browser does not support the video tag.
+                        </video>
+                      <% else %>
+                        <%= case EmbedConverter.convert_url(@selected_cell.data["video_url"]) do %>
+                          <% {:ok, embed_url} -> %>
+                            <iframe
+                              src={embed_url}
+                              class="w-full h-full"
+                              frameborder="0"
+                              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowfullscreen
+                            ></iframe>
+                          <% {:error, _} -> %>
+                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                              Video preview not available
+                            </div>
+                        <% end %>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            <% _ -> %>
+          <% end %>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-4 py-3 bg-gray-700 flex justify-end flex-shrink-0">
+          <button 
+            phx-click="close_modal"
+            class="px-3 py-1.5 rounded-lg bg-gray-600 hover:bg-gray-500 text-gray-200 font-medium transition-colors text-sm">
+            Close
+          </button>
         </div>
       </div>
     </div>
