@@ -183,9 +183,9 @@
               <%= if @selected_cell.data["video_url"] do %>
                 <div class="w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden">
                   <iframe 
-                    src={@selected_cell.data["video_url"]}
+                    src={String.replace(@selected_cell.data["video_url"], "?", "?autoplay=0&")}
                     class="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allow="clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen
                   ></iframe>
                 </div>

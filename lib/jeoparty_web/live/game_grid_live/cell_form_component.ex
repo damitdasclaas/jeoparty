@@ -186,8 +186,11 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                     field={@form[:video_url]}
                     type="text"
                     label="Video URL"
-                    placeholder="YouTube, Vimeo, or other video URL"
+                    placeholder="YouTube or Vimeo URL recommended"
                   />
+                  <div class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    For best results, use YouTube or Vimeo links. Other platforms may have inconsistent behavior.
+                  </div>
                   <% video_url = Phoenix.HTML.Form.input_value(@form, :video_url) %>
                   <%= if video_url && video_url != "" do %>
                     <div class="mt-4 rounded-lg overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-900">
@@ -388,6 +391,18 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
     uploaded_image_url = handle_image_upload(socket)
     uploaded_video_url = handle_video_upload(socket)
 
+    # Determine final image URL based on input type and uploads
+    image_url = case socket.assigns.image_input_type do
+      "upload" -> uploaded_image_url || (socket.assigns[:editing_cell] && socket.assigns.editing_cell.data["image_url"])
+      _ -> params["image_url"]
+    end
+
+    # Determine final video URL based on input type and uploads
+    video_url = case socket.assigns.video_input_type do
+      "upload" -> uploaded_video_url || (socket.assigns[:editing_cell] && socket.assigns.editing_cell.data["video_url"])
+      _ -> params["video_url"]
+    end
+
     attrs = %{
       row: socket.assigns.row,
       column: socket.assigns.column,
@@ -396,8 +411,8 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
       data: %{
         "question" => params["question"],
         "points" => if(params["points"] == "", do: nil, else: params["points"]),
-        "image_url" => if(uploaded_image_url, do: uploaded_image_url, else: params["image_url"]),
-        "video_url" => if(uploaded_video_url, do: uploaded_video_url, else: params["video_url"]),
+        "image_url" => image_url,
+        "video_url" => video_url,
         "answer" => params["answer"],
         "answer_source_url" => params["answer_source_url"]
       }
@@ -469,14 +484,19 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   defp handle_image_upload(socket) do
     case socket.assigns.image_input_type do
       "upload" ->
-        consume_uploaded_entries(socket, :image_upload, fn %{path: path}, entry ->
-          dest = Path.join(["priv", "static", "uploads", filename(entry)])
-          File.mkdir_p!(Path.dirname(dest))
-          File.cp!(path, dest)
-          {:ok, "/uploads/" <> filename(entry)}
-        end)
-        |> List.first()
-
+        case uploaded_entries(socket, :image_upload) do
+          [] ->
+            # If no new upload and editing existing cell, preserve the existing image
+            if socket.assigns[:editing_cell], do: socket.assigns.editing_cell.data["image_url"], else: nil
+          _entries ->
+            consume_uploaded_entries(socket, :image_upload, fn %{path: path}, entry ->
+              dest = Path.join(["priv", "static", "uploads", filename(entry)])
+              File.mkdir_p!(Path.dirname(dest))
+              File.cp!(path, dest)
+              {:ok, "/uploads/" <> filename(entry)}
+            end)
+            |> List.first()
+        end
       _ ->
         nil
     end
@@ -485,14 +505,19 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   defp handle_video_upload(socket) do
     case socket.assigns.video_input_type do
       "upload" ->
-        consume_uploaded_entries(socket, :video_upload, fn %{path: path}, entry ->
-          dest = Path.join(["priv", "static", "uploads", filename(entry)])
-          File.mkdir_p!(Path.dirname(dest))
-          File.cp!(path, dest)
-          {:ok, "/uploads/" <> filename(entry)}
-        end)
-        |> List.first()
-
+        case uploaded_entries(socket, :video_upload) do
+          [] ->
+            # If no new upload and editing existing cell, preserve the existing video
+            if socket.assigns[:editing_cell], do: socket.assigns.editing_cell.data["video_url"], else: nil
+          _entries ->
+            consume_uploaded_entries(socket, :video_upload, fn %{path: path}, entry ->
+              dest = Path.join(["priv", "static", "uploads", filename(entry)])
+              File.mkdir_p!(Path.dirname(dest))
+              File.cp!(path, dest)
+              {:ok, "/uploads/" <> filename(entry)}
+            end)
+            |> List.first()
+        end
       _ ->
         nil
     end

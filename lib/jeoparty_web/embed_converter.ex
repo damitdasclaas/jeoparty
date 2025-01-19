@@ -37,6 +37,10 @@ defmodule JeopartyWeb.EmbedConverter do
   end
   def transform_video_url(url), do: url
 
+  @youtube_params "?autoplay=0&rel=0"
+  @vimeo_params "?autoplay=0&background=0"
+  @dailymotion_params "?autoplay=0&mute=true&controls=true&queue-enable=0&sharing-enable=0&ui-start-screen-info=0"
+
   # YouTube URL patterns
   defp is_youtube_url?(url) do
     String.match?(url, ~r/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)/)
@@ -46,15 +50,15 @@ defmodule JeopartyWeb.EmbedConverter do
     cond do
       # Handle youtube.com/watch?v= URLs
       video_id = Regex.run(~r/youtube\.com\/watch\?v=([^&]+)/, url) ->
-        "https://www.youtube.com/embed/#{Enum.at(video_id, 1)}"
+        "https://www.youtube.com/embed/#{Enum.at(video_id, 1)}#{@youtube_params}"
 
       # Handle youtu.be/ URLs
       video_id = Regex.run(~r/youtu\.be\/([^?]+)/, url) ->
-        "https://www.youtube.com/embed/#{Enum.at(video_id, 1)}"
+        "https://www.youtube.com/embed/#{Enum.at(video_id, 1)}#{@youtube_params}"
 
-      # Handle youtube.com/embed/ URLs (already in correct format)
+      # Handle youtube.com/embed/ URLs (add params if not present)
       Regex.match?(~r/youtube\.com\/embed\//, url) ->
-        url
+        if String.contains?(url, "?"), do: url <> "&autoplay=0", else: url <> @youtube_params
 
       true -> nil
     end
@@ -68,7 +72,7 @@ defmodule JeopartyWeb.EmbedConverter do
   defp get_vimeo_embed(url) do
     case get_vimeo_id(url) do
       nil -> nil
-      id -> "https://player.vimeo.com/video/#{id}"
+      id -> "https://player.vimeo.com/video/#{id}#{@vimeo_params}"
     end
   end
 
@@ -87,7 +91,7 @@ defmodule JeopartyWeb.EmbedConverter do
   defp get_dailymotion_embed(url) do
     case get_dailymotion_id(url) do
       nil -> nil
-      id -> "https://www.dailymotion.com/embed/video/#{id}"
+      id -> "https://www.dailymotion.com/embed/video/#{id}#{@dailymotion_params}"
     end
   end
 
