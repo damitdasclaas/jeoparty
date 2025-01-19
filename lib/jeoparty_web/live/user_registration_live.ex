@@ -7,11 +7,11 @@ defmodule JeopartyWeb.UserRegistrationLive do
   def render(assigns) do
     ~H"""
     <div class="mx-auto max-w-sm">
-      <.header class="text-center">
+      <.header class="text-center text-gray-200">
         Register for an account
-        <:subtitle>
+        <:subtitle class="text-gray-400">
           Already registered?
-          <.link navigate={~p"/users/log_in"} class="font-semibold text-brand hover:underline">
+          <.link navigate={~p"/users/log_in"} class="font-semibold text-blue-400 hover:text-blue-300 hover:underline">
             Log in
           </.link>
           to your account now.
@@ -26,16 +26,17 @@ defmodule JeopartyWeb.UserRegistrationLive do
         phx-trigger-action={@trigger_submit}
         action={~p"/users/log_in?_action=registered"}
         method="post"
+        class="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700"
       >
-        <.error :if={@check_errors}>
+        <.error :if={@check_errors} class="text-red-400">
           Oops, something went wrong! Please check the errors below.
         </.error>
 
-        <.input field={@form[:email]} type="email" label="Email" required />
-        <.input field={@form[:password]} type="password" label="Password" required />
+        <.input field={@form[:email]} type="email" label="Email" required class="bg-gray-700 text-gray-200 border-gray-600" />
+        <.input field={@form[:password]} type="password" label="Password" required class="bg-gray-700 text-gray-200 border-gray-600" />
 
         <:actions>
-          <.button phx-disable-with="Creating account..." class="w-full">Create an account</.button>
+          <.button phx-disable-with="Creating account..." class="w-full bg-blue-600 hover:bg-blue-700">Create an account</.button>
         </:actions>
       </.simple_form>
     </div>
