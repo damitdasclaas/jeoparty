@@ -207,6 +207,97 @@
               <div class="text-4xl font-bold text-center">
                 <%= @selected_cell.data["question"] %>
               </div>
+            <% "audio" -> %>
+              <%= if @selected_cell.data["audio_url"] do %>
+                <div class="w-full max-w-4xl bg-black/20 rounded-lg p-8 flex flex-col items-center justify-center gap-8">
+                  <.icon name="hero-musical-note" class="h-24 w-24 text-white/60"/>
+                  <audio controls class="w-full">
+                    <source src={@selected_cell.data["audio_url"]} type="audio/mpeg">
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+              <% else %>
+                <div class="w-full max-w-4xl bg-black/20 rounded-lg flex items-center justify-center">
+                  <.icon name="hero-musical-note" class="h-32 w-32 text-white/60"/>
+                </div>
+              <% end %>
+              <div class="text-4xl font-bold text-center">
+                <%= @selected_cell.data["question"] %>
+              </div>
+            <% "multiple_choice" -> %>
+              <div class="w-full max-w-4xl space-y-8">
+                <div class="text-4xl font-bold text-center">
+                  <%= @selected_cell.data["question"] %>
+                </div>
+                <div class="grid grid-cols-2 gap-6">
+                  <%= for {option, index} <- Enum.with_index(@selected_cell.data["options"], 1) do %>
+                    <button 
+                      phx-click="select_answer"
+                      phx-value-option={index}
+                      phx-value-cell-id={@selected_cell.id}
+                      disabled={@selected_answer != nil}
+                      class={[
+                        "w-full transition-all duration-300 transform",
+                        "p-6 rounded-2xl text-2xl font-semibold text-left",
+                        "flex items-center gap-4",
+                        # Base styles when no answer selected
+                        if(@selected_answer == nil && !Map.has_key?(@selected_answers, @selected_cell.id),
+                          do: "hover:scale-[1.02] hover:-translate-y-1 bg-white/10 hover:bg-white/20 border-2 border-white/20",
+                          else: ""),
+                        # Styles when answer is selected
+                        if(@selected_answer != nil || Map.has_key?(@selected_answers, @selected_cell.id)) do
+                          selected = @selected_answer || Map.get(@selected_answers, @selected_cell.id)
+                          cond do
+                            # Correct answer - always highlight in green
+                            @selected_cell.data["correct_option"] == index ->
+                              "bg-green-600/30 border-2 border-green-500 shadow-lg shadow-green-500/20"
+                            # Wrong answer that was selected - highlight in red
+                            selected == index ->
+                              "bg-red-600/30 border-2 border-red-500 shadow-lg shadow-red-500/20"
+                            # Other options - dim them
+                            true ->
+                              "opacity-50 bg-white/5 border-2 border-white/10"
+                          end
+                        else
+                          ""
+                        end
+                      ]}>
+                      <div class={[
+                        "w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold",
+                        if(@selected_answer != nil || Map.has_key?(@selected_answers, @selected_cell.id)) do
+                          selected = @selected_answer || Map.get(@selected_answers, @selected_cell.id)
+                          cond do
+                            @selected_cell.data["correct_option"] == index -> "bg-green-500 text-white"
+                            selected == index -> "bg-red-500 text-white"
+                            true -> "bg-white/20 text-white/60"
+                          end
+                        else
+                          "bg-white/20 text-white"
+                        end
+                      ]}>
+                        <%= case index do
+                          1 -> "A"
+                          2 -> "B"
+                          3 -> "C"
+                          4 -> "D"
+                        end %>
+                      </div>
+                      <div class="flex-1">
+                        <%= option %>
+                      </div>
+                      <%= if @selected_answer != nil || Map.has_key?(@selected_answers, @selected_cell.id) do %>
+                        <%= if @selected_cell.data["correct_option"] == index do %>
+                          <.icon name="hero-check-circle" class="h-8 w-8 text-green-400"/>
+                        <% end %>
+                        <% selected = @selected_answer || Map.get(@selected_answers, @selected_cell.id) %>
+                        <%= if selected == index && selected != @selected_cell.data["correct_option"] do %>
+                          <.icon name="hero-x-circle" class="h-8 w-8 text-red-400"/>
+                        <% end %>
+                      <% end %>
+                    </button>
+                  <% end %>
+                </div>
+              </div>
             <% _ -> %>
               <div class="text-6xl font-bold text-center leading-tight">
                 <%= @selected_cell.data["question"] %>
