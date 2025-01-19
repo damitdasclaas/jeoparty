@@ -10,7 +10,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   def mount(socket) do
     {:ok,
      socket
-     |> assign(show_source: false, image_input_type: "url", video_input_type: "url", current_type: "text")
+     |> assign(show_source: false, image_input_type: "url", video_input_type: "url", current_type: "text", show_multiple_choice: false)
      |> allow_upload(:image_upload,
         accept: ~w(.jpg .jpeg .png .gif),
         max_entries: 1,
@@ -52,7 +52,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
               type="select"
               label="Type"
               prompt="Choose a type"
-              options={[{"Text", "text"}, {"Picture", "picture"}, {"Video", "video"}, {"Audio", "audio"}, {"Multiple Choice", "multiple_choice"}]}
+              options={[{"Text", "text"}, {"Picture", "picture"}, {"Video", "video"}, {"Audio", "audio"}]}
               class="w-full"
               phx-change="type_changed"
               phx-target={@myself}
@@ -297,44 +297,6 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                   <% end %>
                 </div>
               </div>
-            <% "multiple_choice" -> %>
-              <div class="bg-gray-900 rounded-lg p-4 space-y-4 border border-gray-700">
-                <.input
-                  field={@form[:question]}
-                  type="text"
-                  label="Question"
-                />
-
-                <div class="space-y-4">
-                  <label class="block text-sm font-medium text-gray-200">Answer Options</label>
-                  <div class="space-y-3">
-                    <%= for i <- 1..4 do %>
-                      <div class="flex items-center gap-3">
-                        <div class="flex-1">
-                          <.input
-                            field={@form[:"option_#{i}"]}
-                            type="text"
-                            placeholder={"Option #{i}"}
-                          />
-                        </div>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="correct_option"
-                            value={i}
-                            checked={@selected_correct_option == i}
-                            phx-click="select_correct_option"
-                            phx-target={@myself}
-                            phx-value-option={i}
-                            class="form-radio"
-                          />
-                          <span class="text-sm text-gray-300">Correct</span>
-                        </label>
-                      </div>
-                    <% end %>
-                  </div>
-                </div>
-              </div>
             <% _ -> %>
               <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
                 <.input
@@ -346,7 +308,48 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
           <% end %>
 
           <div class="bg-gray-900 rounded-lg p-4 space-y-4 border border-gray-700">
-            <%= unless input_value(@form, :type) == "multiple_choice" do %>
+            <div class="flex items-center gap-2 mb-4">
+              <.input
+                field={@form[:enable_multiple_choice]}
+                type="checkbox"
+                label="Enable multiple choice answers"
+                phx-click="toggle_multiple_choice"
+                phx-target={@myself}
+                checked={@show_multiple_choice}
+              />
+            </div>
+
+            <%= if @show_multiple_choice do %>
+              <div class="pl-4 border-l-2 border-gray-700 space-y-4">
+                <label class="block text-sm font-medium text-gray-200">Answer Options</label>
+                <div class="space-y-3">
+                  <%= for i <- 1..4 do %>
+                    <div class="flex items-center gap-3">
+                      <div class="flex-1">
+                        <.input
+                          field={@form[:"option_#{i}"]}
+                          type="text"
+                          placeholder={"Option #{i}"}
+                        />
+                      </div>
+                      <label class="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="correct_option"
+                          value={i}
+                          checked={@selected_correct_option == i}
+                          phx-click="select_correct_option"
+                          phx-target={@myself}
+                          phx-value-option={i}
+                          class="form-radio"
+                        />
+                        <span class="text-sm text-gray-300">Correct</span>
+                      </label>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% else %>
               <.input
                 field={@form[:answer]}
                 type="text"
@@ -415,8 +418,8 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
       image_input_type = if image_url && String.starts_with?(image_url, "/uploads/"), do: "upload", else: "url"
       video_input_type = if video_url && String.starts_with?(video_url, "/uploads/"), do: "upload", else: "url"
 
-      # Add options to initial params
-      option_params = if assigns.editing_cell.type == "multiple_choice" do
+      # Add options to initial params if they exist
+      option_params = if assigns.editing_cell.data["options"] do
         assigns.editing_cell.data["options"]
         |> Enum.with_index(1)
         |> Enum.map(fn {option, index} -> {"option_#{index}", option} end)
@@ -451,12 +454,14 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
 
     changeset = Cell.changeset(%Cell{}, initial_params)
 
-    # Set default correct option to 1 for new multiple choice questions
-    selected_correct_option = cond do
-      assigns[:editing_cell] -> assigns.editing_cell.data["correct_option"]
-      initial_params["type"] == "multiple_choice" -> 1
-      true -> nil
-    end
+    # Set multiple choice state and correct option
+    show_multiple_choice = if assigns[:editing_cell],
+      do: assigns.editing_cell.data["options"] != nil,
+      else: false
+
+    selected_correct_option = if assigns[:editing_cell],
+      do: assigns.editing_cell.data["correct_option"],
+      else: 1
 
     {:ok,
      socket
@@ -464,8 +469,9 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
      |> assign(:editing_cell, assigns[:editing_cell])
      |> assign(:image_input_type, if(assigns[:editing_cell], do: if(String.starts_with?(assigns.editing_cell.data["image_url"] || "", "/uploads/"), do: "upload", else: "url"), else: "url"))
      |> assign(:video_input_type, if(assigns[:editing_cell], do: if(String.starts_with?(assigns.editing_cell.data["video_url"] || "", "/uploads/"), do: "upload", else: "url"), else: "url"))
+     |> assign(:show_multiple_choice, show_multiple_choice)
      |> assign(:selected_correct_option, selected_correct_option)
-     |> assign(:current_type, initial_params["type"])  # Make sure we set the initial type
+     |> assign(:current_type, initial_params["type"])
      |> assign_form(changeset)}
   end
 
@@ -486,23 +492,10 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
 
   @impl true
   def handle_event("type_changed", %{"cell" => %{"type" => type}}, socket) do
-    # Set default correct option to 1 if switching to multiple choice
-    socket = if type == "multiple_choice" && !socket.assigns.selected_correct_option do
-      assign(socket, :selected_correct_option, 1)
-    else
-      socket
-    end
-
     # Create a new changeset with the current form values and new type
     current_params = Map.merge(
       socket.assigns.form.params,
-      %{
-        "type" => type,
-        "option_1" => socket.assigns.form.params["option_1"] || "",
-        "option_2" => socket.assigns.form.params["option_2"] || "",
-        "option_3" => socket.assigns.form.params["option_3"] || "",
-        "option_4" => socket.assigns.form.params["option_4"] || ""
-      }
+      %{"type" => type}
     )
 
     changeset =
@@ -517,13 +510,27 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   end
 
   @impl true
-  def handle_event("validate", %{"cell" => params}, socket) do
-    # Always preserve the current type, whether from params or socket state
-    current_type = params["type"] || socket.assigns.current_type
+  def handle_event("toggle_multiple_choice", _, socket) do
+    show_multiple_choice = !socket.assigns.show_multiple_choice
 
-    # For multiple choice, preserve the options in the changeset
-    params = if current_type == "multiple_choice" do
-      # Convert option keys to strings to avoid mixed key types
+    # If enabling multiple choice, set default correct option if not set
+    socket = if show_multiple_choice && !socket.assigns.selected_correct_option do
+      assign(socket, :selected_correct_option, 1)
+    else
+      socket
+    end
+
+    {:noreply, assign(socket, :show_multiple_choice, show_multiple_choice)}
+  end
+
+  @impl true
+  def handle_event("validate", %{"cell" => params}, socket) do
+    # Always preserve the current type
+    current_type = params["type"] || socket.assigns.current_type
+    params = Map.put(params, "type", current_type)
+
+    # If multiple choice is enabled, preserve the options
+    params = if socket.assigns.show_multiple_choice do
       options = for i <- 1..4 do
         {"option_#{i}", params["option_#{i}"] || socket.assigns.form.params["option_#{i}"] || ""}
       end
@@ -531,9 +538,6 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
     else
       params
     end
-
-    # Ensure type is set correctly
-    params = Map.put(params, "type", current_type)
 
     changeset =
       %Cell{}
@@ -549,8 +553,8 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
 
   @impl true
   def handle_event("save", %{"cell" => params}, socket) do
-    # Ensure there's a correct option selected for multiple choice
-    if params["type"] == "multiple_choice" && !socket.assigns.selected_correct_option do
+    # Ensure there's a correct option selected if multiple choice is enabled
+    if socket.assigns.show_multiple_choice && !socket.assigns.selected_correct_option do
       {:noreply,
        socket
        |> put_flash(:error, "Please select a correct answer for the multiple choice question")}
@@ -571,8 +575,8 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
         _ -> params["video_url"]
       end
 
-      # Process multiple choice options if applicable
-      {options, correct_option, answer} = if params["type"] == "multiple_choice" do
+      # Process multiple choice options if enabled
+      {options, correct_option, answer} = if socket.assigns.show_multiple_choice do
         options = 1..4
           |> Enum.map(&(params["option_#{&1}"]))
           |> Enum.reject(&(is_nil(&1) || &1 == ""))

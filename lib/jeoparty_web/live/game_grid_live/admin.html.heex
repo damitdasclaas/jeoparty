@@ -55,7 +55,7 @@
                                 <% "video" -> %>
                                   <.icon name="hero-video-camera" class="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-blue-200"/>
                                 <% "audio" -> %>
-                                  <.icon name="hero-musical-note" class="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-blue-200"/>
+                                  <.icon name="hero-speaker-wave" class="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-blue-200"/>
                                 <% "multiple_choice" -> %>
                                   <.icon name="hero-list-bullet" class="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-blue-200"/>
                                 <% _ -> %>
@@ -360,6 +360,14 @@
         <!-- Content -->
         <div class="p-4 space-y-4 overflow-y-auto">
           <!-- Question -->
+          <div class="space-y-1">
+            <h4 class="text-sm font-medium text-gray-400">Question</h4>
+            <div class="p-3 bg-gray-700 rounded-lg text-gray-100">
+              <%= @selected_cell.data["question"] %>
+            </div>
+          </div>
+
+          <!-- Question Content -->
           <%= case @selected_cell.type do %>
             <% "picture" -> %>
               <%= if @selected_cell.data["image_url"] do %>
@@ -489,9 +497,37 @@
           <!-- Answer -->
           <div class="space-y-1">
             <h4 class="text-sm font-medium text-gray-400">Answer</h4>
-            <div class="p-3 bg-gray-700 rounded-lg text-gray-100">
-              <%= @selected_cell.data["answer"] %>
-            </div>
+            <%= if @selected_cell.data["options"] do %>
+              <div class="space-y-2">
+                <%= for {option, index} <- Enum.with_index(@selected_cell.data["options"], 1) do %>
+                  <div class={[
+                    "p-3 rounded-lg flex items-center gap-3",
+                    if(@selected_cell.data["correct_option"] == index, 
+                      do: "bg-green-900/50 text-green-100", 
+                      else: "bg-gray-700 text-gray-100")
+                  ]}>
+                    <div class={[
+                      "w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium",
+                      if(@selected_cell.data["correct_option"] == index, 
+                        do: "bg-green-500 text-green-900", 
+                        else: "bg-gray-600 text-gray-300")
+                    ]}>
+                      <%= index %>
+                    </div>
+                    <div class="flex-1">
+                      <%= option %>
+                    </div>
+                    <%= if @selected_cell.data["correct_option"] == index do %>
+                      <.icon name="hero-check-circle" class="h-5 w-5 text-green-400"/>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            <% else %>
+              <div class="p-3 bg-gray-700 rounded-lg text-gray-100">
+                <%= @selected_cell.data["answer"] %>
+              </div>
+            <% end %>
           </div>
 
           <!-- Answer Source -->
