@@ -35,3 +35,6 @@ jeoparty-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# Uploaded files
+/priv/static/uploads/
+
