@@ -15,6 +15,12 @@ defmodule JeopartyWeb.Endpoint do
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
 
+  # Serve uploaded files from "priv/static/uploads"
+  plug Plug.Static,
+    at: "/uploads",
+    from: Path.expand("./priv/static/uploads"),
+    gzip: false
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # You should set gzip to true if you are running phx.digest
