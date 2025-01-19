@@ -1,7 +1,21 @@
 <div class="container mx-auto px-4" phx-hook="GameView" id="game-view">
   <div class="flex items-center justify-between mb-4">
     <h1 class="text-lg font-medium text-gray-400"><%= @game_grid.name %></h1>
-    <span class="px-3 py-1 rounded-lg bg-gray-800 text-gray-400 text-sm">Game View</span>
+    <div class="flex items-center gap-3">
+      <.link 
+        navigate={~p"/game_grids"}
+        class="px-3 py-1 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-gray-200 text-sm transition-colors flex items-center justify-center"
+      >
+        <.icon name="hero-squares-2x2" class="h-4 w-4"/>
+      </.link>
+      <.link 
+        navigate={~p"/game_grids/#{@game_grid}"}
+        class="px-3 py-1 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-gray-200 text-sm transition-colors flex items-center justify-center"
+      >
+        <.icon name="hero-pencil-square" class="h-4 w-4"/>
+      </.link>
+      <span class="px-3 py-1 rounded-lg bg-gray-800 text-gray-400 text-sm">Game View</span>
+    </div>
   </div>
   
   <%= if @game_grid.show_standings do %>
