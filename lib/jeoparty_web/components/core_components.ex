@@ -286,6 +286,7 @@ defmodule JeopartyWeb.CoreComponents do
   attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
   attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
   attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
+  attr :help, :string, default: nil, doc: "help text to display below the input"
 
   attr :rest, :global,
     include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
@@ -343,6 +344,9 @@ defmodule JeopartyWeb.CoreComponents do
         {Phoenix.HTML.Form.options_for_select(@options, @value)}
       </select>
       <.error :for={msg <- @errors}>{msg}</.error>
+      <%= if @help do %>
+        <p class="mt-2 text-sm text-gray-500"><%= @help %></p>
+      <% end %>
     </div>
     """
   end
@@ -396,6 +400,9 @@ defmodule JeopartyWeb.CoreComponents do
         {@rest}
       />
       <.error :for={msg <- @errors}>{msg}</.error>
+      <%= if @help do %>
+        <p class="mt-2 text-sm text-gray-500"><%= @help %></p>
+      <% end %>
     </div>
     """
   end

@@ -21,7 +21,13 @@ defmodule JeopartyWeb.GameGridLive.FormComponent do
       >
         <.input field={@form[:name]} type="text" label="Name" />
         <.input field={@form[:columns]} type="number" label="Columns" min="1" />
-        <.input field={@form[:rows]} type="number" label="Rows" />
+        <.input
+          field={@form[:rows]}
+          type="number"
+          label="Rows"
+          min="2"
+          help="First row is reserved for categories. Minimum 2 rows required."
+        />
         <.input field={@form[:created_by]} type="hidden" value={@current_user.id} />
         <:actions>
           <.button phx-disable-with="Saving...">Save Game grid</.button>
