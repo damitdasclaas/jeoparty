@@ -122,6 +122,15 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                       </div>
                     <% end %>
 
+                    <%= if @editing_cell && @editing_cell.data["image_url"] && String.starts_with?(@editing_cell.data["image_url"], "/uploads/") do %>
+                      <div class="mt-4 rounded-lg overflow-hidden shadow-lg">
+                        <img src={@editing_cell.data["image_url"]} alt="Current Image" class="w-full h-48 object-cover"/>
+                        <div class="bg-gray-100 dark:bg-gray-700 p-2 text-sm text-center text-gray-600 dark:text-gray-300">
+                          Current Image
+                        </div>
+                      </div>
+                    <% end %>
+
                     <%= for err <- upload_errors(@uploads.image_upload) do %>
                       <div class="mt-1 text-red-500 text-sm"><%= error_to_string(err) %></div>
                     <% end %>
@@ -215,11 +224,14 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   @impl true
   def update(assigns, socket) do
     initial_params = if assigns[:editing_cell] do
+      image_url = assigns.editing_cell.data["image_url"]
+      image_input_type = if image_url && String.starts_with?(image_url, "/uploads/"), do: "upload", else: "url"
+
       %{
         "type" => assigns.editing_cell.type,
         "question" => assigns.editing_cell.data["question"],
         "points" => assigns.editing_cell.data["points"],
-        "image_url" => assigns.editing_cell.data["image_url"],
+        "image_url" => if(image_input_type == "url", do: image_url, else: ""),
         "video_url" => assigns.editing_cell.data["video_url"],
         "answer" => assigns.editing_cell.data["answer"],
         "answer_source_url" => assigns.editing_cell.data["answer_source_url"]
@@ -242,6 +254,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
      socket
      |> assign(assigns)
      |> assign(:editing_cell, assigns[:editing_cell])
+     |> assign(:image_input_type, if(assigns[:editing_cell], do: if(String.starts_with?(assigns.editing_cell.data["image_url"] || "", "/uploads/"), do: "upload", else: "url"), else: "url"))
      |> assign_form(changeset)}
   end
 
