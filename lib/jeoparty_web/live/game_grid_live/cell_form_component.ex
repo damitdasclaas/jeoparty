@@ -48,6 +48,12 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                 type="text"
                 label="Image URL"
               />
+              <% image_url = Phoenix.HTML.Form.input_value(@form, :image_url) %>
+              <%= if image_url && image_url != "" do %>
+                <div class="mt-4 rounded-lg overflow-hidden shadow-lg">
+                  <img src={image_url} alt="Preview" class="w-full h-48 object-cover"/>
+                </div>
+              <% end %>
             <% "video" -> %>
               <.input
                 field={@form[:question]}
