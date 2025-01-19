@@ -127,29 +127,39 @@
           <%= @game_grid.show_standings && "Show Game Grid" || "Show Standings" %>
         </button>
 
-        <button class={[
-          "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all duration-200 w-full",
-          "shadow-md hover:shadow-lg",
-          "bg-indigo-500 text-white hover:bg-indigo-600"
-        ]}
-          phx-click="hide_all">
-          <.icon name="hero-arrow-path" class="h-5 w-5"/>
-          Reset All Cells
-        </button>
+        <div class="relative group">
+          <button class={[
+            "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all duration-200 w-full",
+            "shadow-md hover:shadow-lg",
+            "bg-indigo-500 text-white hover:bg-indigo-600"
+          ]}
+            phx-click="hide_all">
+            <.icon name="hero-arrow-path" class="h-5 w-5"/>
+            Reset All Cells
+          </button>
+          <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+            Resets all Questions
+          </div>
+        </div>
 
-        <button class={[
-          "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all duration-200 w-full",
-          "shadow-md hover:shadow-lg",
-          "bg-red-500 text-white hover:bg-red-600"
-        ]}
-          phx-click="reset_game"
-          data-confirm="Are you sure you want to reset the game? This will:
+        <div class="relative group">
+          <button class={[
+            "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all duration-200 w-full",
+            "shadow-md hover:shadow-lg",
+            "bg-red-500 text-white hover:bg-red-600"
+          ]}
+            phx-click="reset_game"
+            data-confirm="Are you sure you want to reset the game? This will:
 • Hide all revealed cells
 • Reset all team scores to 0
 • Show the game grid">
-          <.icon name="hero-arrow-path" class="h-5 w-5"/>
-          Reset Whole Game
-        </button>
+            <.icon name="hero-arrow-path" class="h-5 w-5"/>
+            Reset Whole Game
+          </button>
+          <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+            Resets all Questions and Team Scores
+          </div>
+        </div>
       </div>
     </div>
 
