@@ -24,6 +24,18 @@ import topbar from "../vendor/topbar"
 
 // Define hooks
 const Hooks = {
+  AnimateScore: {
+    mounted() {
+      this.handleScoreChange();
+    },
+    updated() {
+      this.handleScoreChange();
+    },
+    handleScoreChange() {
+      // Ensure all transform properties are included in the transition
+      this.el.style.transition = 'transform 0.5s ease-out, scale 0.5s ease-out';
+    }
+  },
   GameView: {
     mounted() {
       this.handleViewTransition(true);
@@ -59,9 +71,10 @@ const Hooks = {
           standings.style.opacity = "1";
           standings.classList.add("standings-view");
           const teams = standings.querySelectorAll("#leaderboard > div");
+          const totalTeams = teams.length;
           teams.forEach((team, index) => {
             team.classList.add("team-entry");
-            team.style.setProperty('--delay', `${index * 0.1}s`);
+            team.style.setProperty('--delay', `${(totalTeams - index - 1) * 0.1}s`);
           });
         });
       }
@@ -108,7 +121,7 @@ style.textContent = `
   @keyframes teamEnter {
     0% {
       opacity: 0;
-      transform: translateX(-20px);
+      transform: translateY(-100px);
     }
     100% {
       opacity: 1;
@@ -147,7 +160,12 @@ style.textContent = `
 
   .team-entry:hover {
     transform: scale(1.01);
-    transition: transform 0.2s ease-out;
+    transition: all 0.2s ease-out;
+  }
+
+  /* Ensure all transform properties transition smoothly */
+  #leaderboard > div {
+    transition: all 0.5s ease-out;
   }
 `;
 
