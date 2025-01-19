@@ -112,9 +112,9 @@ const Hooks = {
       }
 
       const teams = JSON.parse(this.el.dataset.teams);
-      const barHeight = 60;
-      const barPadding = 10;
-      const cornerRadius = 8;
+      const barHeight = 80;
+      const barPadding = 15;
+      const cornerRadius = 12;
 
       // Update SVG height based on number of teams
       const height = Math.max(500, (barHeight + barPadding) * teams.length + 40);
@@ -124,12 +124,12 @@ const Hooks = {
       // Create scales
       const xScale = d3.scaleLinear()
         .domain([0, Math.max(d3.max(teams, d => Math.abs(d.score)), 100)])
-        .range([0, this.width - 200]); // Leave space for team names
+        .range([0, this.width - 300]);
 
       const yScale = d3.scaleBand()
         .domain(teams.map(d => d.id))
         .range([0, this.height])
-        .padding(0.1);
+        .padding(0.15);
 
       // Color scale for rank
       const colorScale = d3.scaleOrdinal()
@@ -247,7 +247,7 @@ const Hooks = {
             .attr("rx", cornerRadius)
             .attr("fill", "rgba(255, 255, 255, 0.03)")
             .attr("stroke", "rgba(255, 255, 255, 0.1)")
-            .attr("stroke-width", 1)
+            .attr("stroke-width", 2)
             .attr("opacity", 0)
             .transition()
             .duration(750)
@@ -265,26 +265,28 @@ const Hooks = {
             const bar = enter.append("g")
               .attr("class", "bar");
 
-            // Main bar
+            // Main bar - only for positive scores
             bar.append("rect")
               .attr("class", "bar-fill")
-              .attr("x", 200)
+              .attr("x", 250)
               .attr("y", barPadding)
               .attr("height", barHeight - barPadding * 2)
               .attr("rx", cornerRadius)
               .attr("width", 0)
               .style("fill", d => colorScale(d.rank))
-              .style("filter", "url(#glow)");
+              .style("filter", "url(#glow)")
+              .style("opacity", d => d.score >= 0 ? 1 : 0);
 
-            // Shine effect
+            // Shine effect - only for positive scores
             bar.append("rect")
               .attr("class", "bar-shine")
-              .attr("x", 200)
+              .attr("x", 250)
               .attr("y", barPadding)
               .attr("height", (barHeight - barPadding * 2) * 0.5)
               .attr("rx", cornerRadius)
               .attr("width", 0)
-              .style("fill", "rgba(255, 255, 255, 0.1)");
+              .style("fill", "rgba(255, 255, 255, 0.1)")
+              .style("opacity", d => d.score >= 0 ? 1 : 0);
 
             return bar;
           },
@@ -293,12 +295,14 @@ const Hooks = {
               .transition()
               .duration(750)
               .style("fill", d => colorScale(d.rank))
-              .attr("width", d => xScale(Math.abs(d.score)));
+              .style("opacity", d => d.score >= 0 ? 1 : 0)
+              .attr("width", d => d.score >= 0 ? xScale(d.score) : 0);
 
             update.select(".bar-shine")
               .transition()
               .duration(750)
-              .attr("width", d => xScale(Math.abs(d.score)));
+              .style("opacity", d => d.score >= 0 ? 1 : 0)
+              .attr("width", d => d.score >= 0 ? xScale(d.score) : 0);
 
             return update;
           }
@@ -309,7 +313,7 @@ const Hooks = {
         .attr("id", "glow");
 
       filter.append("feGaussianBlur")
-        .attr("stdDeviation", "3")
+        .attr("stdDeviation", "4")
         .attr("result", "coloredBlur");
 
       const feMerge = filter.append("feMerge");
@@ -325,26 +329,26 @@ const Hooks = {
           enter => {
             const rankGroup = enter.append("g")
               .attr("class", "rank")
-              .attr("transform", d => `translate(20, ${barHeight/2})`);
+              .attr("transform", d => `translate(30, ${barHeight/2})`);
             
             // Circle background
             rankGroup.append("circle")
-              .attr("r", 20)
+              .attr("r", 26)
               .attr("fill", d => colorScale(d.rank))
               .style("filter", "url(#glow)");
             
             // Shine effect
             rankGroup.append("circle")
-              .attr("r", 20)
+              .attr("r", 26)
               .attr("fill", "rgba(255, 255, 255, 0.1)")
-              .attr("clip-path", "circle(20px at 0 -10px)");
+              .attr("clip-path", "circle(26px at 0 -13px)");
             
             rankGroup.append("text")
               .attr("text-anchor", "middle")
               .attr("dy", "0.35em")
               .attr("fill", "white")
               .attr("font-weight", "bold")
-              .attr("font-size", "18px")
+              .attr("font-size", "24px")
               .text(d => d.rank);
             
             return rankGroup;
@@ -375,11 +379,11 @@ const Hooks = {
         .join(
           enter => enter.append("text")
             .attr("class", "team-name")
-            .attr("x", 50)
+            .attr("x", 80)
             .attr("y", barHeight/2)
             .attr("dy", "0.35em")
             .attr("fill", "white")
-            .attr("font-size", "18px")
+            .attr("font-size", "32px")
             .attr("font-weight", "600")
             .style("text-shadow", "0 2px 4px rgba(0,0,0,0.2)")
             .text(d => d.name),
@@ -392,18 +396,19 @@ const Hooks = {
         .join(
           enter => enter.append("text")
             .attr("class", "score")
-            .attr("x", d => 210 + xScale(Math.abs(d.score)))
+            .attr("x", d => d.score >= 0 ? 260 + xScale(d.score) : 260)
             .attr("y", barHeight/2)
             .attr("dy", "0.35em")
-            .attr("fill", "white")
-            .attr("font-size", "24px")
+            .attr("fill", d => d.score >= 0 ? "white" : "#ef4444")
+            .attr("font-size", "32px")
             .attr("font-weight", "bold")
             .style("text-shadow", "0 2px 4px rgba(0,0,0,0.2)")
             .text(d => `$${d.score.toLocaleString()}`),
           update => update
             .transition()
             .duration(750)
-            .attr("x", d => 210 + xScale(Math.abs(d.score)))
+            .attr("x", d => d.score >= 0 ? 260 + xScale(d.score) : 260)
+            .attr("fill", d => d.score >= 0 ? "white" : "#ef4444")
             .tween("text", function(d) {
               const i = d3.interpolate(this._current || d.score, d.score);
               this._current = d.score;
