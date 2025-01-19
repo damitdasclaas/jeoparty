@@ -229,7 +229,7 @@
                 <div class="text-4xl font-bold text-center">
                   <%= @selected_cell.data["question"] %>
                 </div>
-                <div class="grid grid-cols-1 gap-4">
+                <div class="grid grid-cols-2 gap-6">
                   <%= for {option, index} <- Enum.with_index(@selected_cell.data["options"], 1) do %>
                     <button 
                       phx-click="select_answer"
@@ -238,11 +238,11 @@
                       disabled={@selected_answer != nil}
                       class={[
                         "w-full transition-all duration-300 transform",
-                        "p-8 rounded-2xl text-2xl font-semibold text-left",
-                        "flex items-center gap-6",
+                        "p-6 rounded-2xl text-2xl font-semibold text-left",
+                        "flex items-center gap-4",
                         # Base styles when no answer selected
                         if(@selected_answer == nil,
-                          do: "hover:scale-[1.02] hover:-translate-y-1 bg-blue-600/20 hover:bg-blue-600/30",
+                          do: "hover:scale-[1.02] hover:-translate-y-1 bg-white/10 hover:bg-white/20 border-2 border-white/20",
                           else: ""),
                         # Styles when answer is selected
                         if(@selected_answer != nil) do
@@ -255,7 +255,7 @@
                               "bg-red-600/30 border-2 border-red-500 shadow-lg shadow-red-500/20"
                             # Other options - dim them
                             true ->
-                              "opacity-50 bg-blue-600/10"
+                              "opacity-50 bg-white/5 border-2 border-white/10"
                           end
                         else
                           ""
@@ -265,15 +265,20 @@
                         "w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold",
                         if(@selected_answer != nil) do
                           cond do
-                            @selected_cell.data["correct_option"] == index -> "bg-green-500/50 text-green-100"
-                            @selected_answer == index -> "bg-red-500/50 text-red-100"
-                            true -> "bg-blue-500/30 text-blue-200"
+                            @selected_cell.data["correct_option"] == index -> "bg-green-500 text-white"
+                            @selected_answer == index -> "bg-red-500 text-white"
+                            true -> "bg-white/20 text-white/60"
                           end
                         else
-                          "bg-blue-500/30 text-blue-200"
+                          "bg-white/20 text-white"
                         end
                       ]}>
-                        <%= index %>
+                        <%= case index do
+                          1 -> "A"
+                          2 -> "B"
+                          3 -> "C"
+                          4 -> "D"
+                        end %>
                       </div>
                       <div class="flex-1">
                         <%= option %>
