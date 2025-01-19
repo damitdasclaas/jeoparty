@@ -134,8 +134,79 @@ const Hooks = {
       // Color scale for rank
       const colorScale = d3.scaleOrdinal()
         .domain([1, 2, 3])
-        .range(["#fbbf24", "#9ca3af", "#d97706"])
-        .unknown("#3b82f6");
+        .range([
+          "url(#gold-gradient)",
+          "url(#silver-gradient)",
+          "url(#bronze-gradient)"
+        ])
+        .unknown("url(#blue-gradient)");
+
+      // Create gradients
+      const defs = this.svg.append("defs");
+      
+      // Gold gradient
+      const goldGradient = defs.append("linearGradient")
+        .attr("id", "gold-gradient")
+        .attr("x1", "0%")
+        .attr("y1", "0%")
+        .attr("x2", "100%")
+        .attr("y2", "0%");
+      goldGradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#fbbf24")
+        .attr("stop-opacity", 1);
+      goldGradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#f59e0b")
+        .attr("stop-opacity", 1);
+
+      // Silver gradient
+      const silverGradient = defs.append("linearGradient")
+        .attr("id", "silver-gradient")
+        .attr("x1", "0%")
+        .attr("y1", "0%")
+        .attr("x2", "100%")
+        .attr("y2", "0%");
+      silverGradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#9ca3af")
+        .attr("stop-opacity", 1);
+      silverGradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#6b7280")
+        .attr("stop-opacity", 1);
+
+      // Bronze gradient
+      const bronzeGradient = defs.append("linearGradient")
+        .attr("id", "bronze-gradient")
+        .attr("x1", "0%")
+        .attr("y1", "0%")
+        .attr("x2", "100%")
+        .attr("y2", "0%");
+      bronzeGradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#d97706")
+        .attr("stop-opacity", 1);
+      bronzeGradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#b45309")
+        .attr("stop-opacity", 1);
+
+      // Blue gradient
+      const blueGradient = defs.append("linearGradient")
+        .attr("id", "blue-gradient")
+        .attr("x1", "0%")
+        .attr("y1", "0%")
+        .attr("x2", "100%")
+        .attr("y2", "0%");
+      blueGradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#3b82f6")
+        .attr("stop-opacity", 1);
+      blueGradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#2563eb")
+        .attr("stop-opacity", 1);
 
       // Create bars with animated transitions
       const bars = this.chartGroup.selectAll(".score-bar")
@@ -174,39 +245,80 @@ const Hooks = {
             .attr("width", this.width)
             .attr("height", barHeight)
             .attr("rx", cornerRadius)
-            .attr("fill", d => d3.color(colorScale(d.rank)).darker(0.8))
+            .attr("fill", "rgba(255, 255, 255, 0.03)")
+            .attr("stroke", "rgba(255, 255, 255, 0.1)")
+            .attr("stroke-width", 1)
             .attr("opacity", 0)
             .transition()
             .duration(750)
-            .attr("opacity", 0.2),
+            .attr("opacity", 1),
           update => update.transition()
             .duration(750)
             .attr("width", this.width)
-            .attr("fill", d => d3.color(colorScale(d.rank)).darker(0.8))
         );
 
-      // Score bars
+      // Score bars with glass effect
       barsUpdate.selectAll(".bar")
         .data(d => [d])
         .join(
-          enter => enter.append("rect")
-            .attr("class", "bar")
-            .attr("x", 200)
-            .attr("y", barPadding)
-            .attr("height", barHeight - barPadding * 2)
-            .attr("rx", cornerRadius)
-            .attr("width", 0)
-            .style("fill", d => colorScale(d.rank))
-            .transition()
-            .duration(750)
-            .attr("width", d => xScale(Math.abs(d.score))),
-          update => update.transition()
-            .duration(750)
-            .style("fill", d => colorScale(d.rank))
-            .attr("width", d => xScale(Math.abs(d.score)))
+          enter => {
+            const bar = enter.append("g")
+              .attr("class", "bar");
+
+            // Main bar
+            bar.append("rect")
+              .attr("class", "bar-fill")
+              .attr("x", 200)
+              .attr("y", barPadding)
+              .attr("height", barHeight - barPadding * 2)
+              .attr("rx", cornerRadius)
+              .attr("width", 0)
+              .style("fill", d => colorScale(d.rank))
+              .style("filter", "url(#glow)");
+
+            // Shine effect
+            bar.append("rect")
+              .attr("class", "bar-shine")
+              .attr("x", 200)
+              .attr("y", barPadding)
+              .attr("height", (barHeight - barPadding * 2) * 0.5)
+              .attr("rx", cornerRadius)
+              .attr("width", 0)
+              .style("fill", "rgba(255, 255, 255, 0.1)");
+
+            return bar;
+          },
+          update => {
+            update.select(".bar-fill")
+              .transition()
+              .duration(750)
+              .style("fill", d => colorScale(d.rank))
+              .attr("width", d => xScale(Math.abs(d.score)));
+
+            update.select(".bar-shine")
+              .transition()
+              .duration(750)
+              .attr("width", d => xScale(Math.abs(d.score)));
+
+            return update;
+          }
         );
 
-      // Rank circles
+      // Add glow filter
+      const filter = defs.append("filter")
+        .attr("id", "glow");
+
+      filter.append("feGaussianBlur")
+        .attr("stdDeviation", "3")
+        .attr("result", "coloredBlur");
+
+      const feMerge = filter.append("feMerge");
+      feMerge.append("feMergeNode")
+        .attr("in", "coloredBlur");
+      feMerge.append("feMergeNode")
+        .attr("in", "SourceGraphic");
+
+      // Rank circles with glass effect
       barsUpdate.selectAll(".rank")
         .data(d => [d])
         .join(
@@ -215,15 +327,24 @@ const Hooks = {
               .attr("class", "rank")
               .attr("transform", d => `translate(20, ${barHeight/2})`);
             
+            // Circle background
             rankGroup.append("circle")
-              .attr("r", 16)
-              .attr("fill", d => colorScale(d.rank));
+              .attr("r", 20)
+              .attr("fill", d => colorScale(d.rank))
+              .style("filter", "url(#glow)");
+            
+            // Shine effect
+            rankGroup.append("circle")
+              .attr("r", 20)
+              .attr("fill", "rgba(255, 255, 255, 0.1)")
+              .attr("clip-path", "circle(20px at 0 -10px)");
             
             rankGroup.append("text")
               .attr("text-anchor", "middle")
               .attr("dy", "0.35em")
               .attr("fill", "white")
               .attr("font-weight", "bold")
+              .attr("font-size", "18px")
               .text(d => d.rank);
             
             return rankGroup;
@@ -258,8 +379,9 @@ const Hooks = {
             .attr("y", barHeight/2)
             .attr("dy", "0.35em")
             .attr("fill", "white")
-            .attr("font-size", "16px")
-            .attr("font-weight", "500")
+            .attr("font-size", "18px")
+            .attr("font-weight", "600")
+            .style("text-shadow", "0 2px 4px rgba(0,0,0,0.2)")
             .text(d => d.name),
           update => update.text(d => d.name)
         );
@@ -274,8 +396,9 @@ const Hooks = {
             .attr("y", barHeight/2)
             .attr("dy", "0.35em")
             .attr("fill", "white")
-            .attr("font-size", "20px")
+            .attr("font-size", "24px")
             .attr("font-weight", "bold")
+            .style("text-shadow", "0 2px 4px rgba(0,0,0,0.2)")
             .text(d => `$${d.score.toLocaleString()}`),
           update => update
             .transition()

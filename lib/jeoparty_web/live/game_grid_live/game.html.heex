@@ -30,23 +30,28 @@
     <% else %>
       <div class="flex flex-col items-center justify-center min-h-[calc(100vh-6rem)]">
         <div class="flex flex-col items-center w-full max-w-6xl mx-auto">
-          <%
-            # Sort teams by score and group by score to handle ties
-            teams_with_ranks = @teams
-            |> Enum.sort_by(& &1.score, :desc)
-            |> Enum.chunk_by(& &1.score)
-            |> Enum.with_index(1)
-            |> Enum.flat_map(fn {group, rank} -> 
-              Enum.map(group, fn team -> Map.merge(team, %{rank: rank}) end)
-            end)
-          %>
-          <div 
-            class="w-full"
-            id="d3-scoreboard"
-            phx-hook="D3Scoreboard"
-            phx-update="ignore"
-            data-teams={Jason.encode!(teams_with_ranks)}
-          >
+          <div class="w-full relative">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-3xl blur-3xl"></div>
+            <div class="relative">
+              <%
+                # Sort teams by score and group by score to handle ties
+                teams_with_ranks = @teams
+                |> Enum.sort_by(& &1.score, :desc)
+                |> Enum.chunk_by(& &1.score)
+                |> Enum.with_index(1)
+                |> Enum.flat_map(fn {group, rank} -> 
+                  Enum.map(group, fn team -> Map.merge(team, %{rank: rank}) end)
+                end)
+              %>
+              <div 
+                class="w-full"
+                id="d3-scoreboard"
+                phx-hook="D3Scoreboard"
+                phx-update="ignore"
+                data-teams={Jason.encode!(teams_with_ranks)}
+              >
+              </div>
+            </div>
           </div>
         </div>
       </div>
