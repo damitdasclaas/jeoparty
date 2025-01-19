@@ -401,6 +401,22 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     {:noreply, socket}
   end
 
+  @impl true
+  def handle_event("delete_all_teams", _params, socket) do
+    Enum.each(socket.assigns.teams, fn team ->
+      Jeoparty.Teams.delete_team(team)
+    end)
+
+    # Broadcast team updates to all clients
+    PubSub.broadcast(
+      Jeoparty.PubSub,
+      "game_grid:#{socket.assigns.game_grid.id}",
+      {:teams_updated, []}
+    )
+
+    {:noreply, assign(socket, teams: [])}
+  end
+
   defp get_cell(cells, row, col) do
     row = if is_binary(row), do: String.to_integer(row), else: row
     col = if is_binary(col), do: String.to_integer(col), else: col
