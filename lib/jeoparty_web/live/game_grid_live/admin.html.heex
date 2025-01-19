@@ -333,8 +333,8 @@
                       <span>Open in new tab</span>
                     </a>
                   </div>
-                  <div class="rounded-lg overflow-hidden bg-gray-700">
-                    <img src={@selected_cell.data["image_url"]} alt="Question Image" class="w-full object-contain max-h-64"/>
+                  <div class="rounded-lg overflow-hidden bg-gray-700 max-h-[300px]">
+                    <img src={@selected_cell.data["image_url"]} alt="Question Image" class="w-full h-full object-contain"/>
                   </div>
                 </div>
               <% end %>
@@ -354,9 +354,9 @@
                     <% end %>
                   </div>
                   <div class="rounded-lg overflow-hidden bg-gray-700">
-                    <div class="aspect-w-16 aspect-h-9">
+                    <div style="max-height: 300px;">
                       <%= if String.starts_with?(@selected_cell.data["video_url"], "/uploads/") do %>
-                        <video controls class="w-full">
+                        <video controls style="max-height: 300px;" class="w-full">
                           <source src={@selected_cell.data["video_url"]} type="video/mp4">
                           Your browser does not support the video tag.
                         </video>
@@ -365,7 +365,8 @@
                           <% {:ok, embed_url} -> %>
                             <iframe
                               src={embed_url}
-                              class="w-full h-full"
+                              style="max-height: 300px;"
+                              class="w-full"
                               frameborder="0"
                               allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                               allowfullscreen
@@ -475,94 +476,6 @@
               <span class="text-xl font-bold text-blue-400">$<%= @selected_cell.data["points"] || (@selected_cell.row - 1) * 100 %></span>
             </div>
           </div>
-
-          <!-- Media Preview -->
-          <%= case @selected_cell.type do %>
-            <% "picture" -> %>
-              <%= if @selected_cell.data["image_url"] do %>
-                <div class="space-y-1">
-                  <div class="flex items-center justify-between">
-                    <h4 class="text-sm font-medium text-gray-400">Image</h4>
-                    <a href={@selected_cell.data["image_url"]} 
-                       target="_blank" 
-                       rel="noopener noreferrer"
-                       class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
-                      <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4"/>
-                      <span>Open in new tab</span>
-                    </a>
-                  </div>
-                  <div class="rounded-lg overflow-hidden bg-gray-700">
-                    <img src={@selected_cell.data["image_url"]} alt="Question Image" class="w-full object-contain max-h-64"/>
-                  </div>
-                </div>
-              <% end %>
-            <% "video" -> %>
-              <%= if @selected_cell.data["video_url"] do %>
-                <div class="space-y-1">
-                  <div class="flex items-center justify-between">
-                    <h4 class="text-sm font-medium text-gray-400">Video</h4>
-                    <%= if String.starts_with?(@selected_cell.data["video_url"], "/uploads/") do %>
-                      <a href={@selected_cell.data["video_url"]} 
-                         target="_blank" 
-                         rel="noopener noreferrer"
-                         class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
-                        <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4"/>
-                        <span>Open in new tab</span>
-                      </a>
-                    <% end %>
-                  </div>
-                  <div class="rounded-lg overflow-hidden bg-gray-700">
-                    <div class="aspect-w-16 aspect-h-9">
-                      <%= if String.starts_with?(@selected_cell.data["video_url"], "/uploads/") do %>
-                        <video controls class="w-full">
-                          <source src={@selected_cell.data["video_url"]} type="video/mp4">
-                          Your browser does not support the video tag.
-                        </video>
-                      <% else %>
-                        <%= case EmbedConverter.convert_url(@selected_cell.data["video_url"]) do %>
-                          <% {:ok, embed_url} -> %>
-                            <iframe
-                              src={embed_url}
-                              class="w-full h-full"
-                              frameborder="0"
-                              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowfullscreen
-                            ></iframe>
-                          <% {:error, _} -> %>
-                            <div class="w-full h-full flex items-center justify-center text-gray-400">
-                              Video preview not available
-                            </div>
-                        <% end %>
-                      <% end %>
-                    </div>
-                  </div>
-                </div>
-              <% end %>
-            <% "audio" -> %>
-              <%= if @selected_cell.data["audio_url"] do %>
-                <div class="space-y-1">
-                  <div class="flex items-center justify-between">
-                    <h4 class="text-sm font-medium text-gray-400">Audio</h4>
-                    <%= if String.starts_with?(@selected_cell.data["audio_url"], "/uploads/") do %>
-                      <a href={@selected_cell.data["audio_url"]} 
-                         target="_blank" 
-                         rel="noopener noreferrer"
-                         class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
-                        <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4"/>
-                        <span>Open in new tab</span>
-                      </a>
-                    <% end %>
-                  </div>
-                  <div class="rounded-lg overflow-hidden bg-gray-700 p-4">
-                    <audio controls class="w-full">
-                      <source src={@selected_cell.data["audio_url"]} type="audio/mpeg">
-                      Your browser does not support the audio element.
-                    </audio>
-                  </div>
-                </div>
-              <% end %>
-            <% _ -> %>
-          <% end %>
         </div>
 
         <!-- Footer -->
