@@ -229,7 +229,7 @@
                 <div class="text-4xl font-bold text-center">
                   <%= @selected_cell.data["question"] %>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4">
                   <%= for {option, index} <- Enum.with_index(@selected_cell.data["options"], 1) do %>
                     <button 
                       phx-click="select_answer"
@@ -237,53 +237,55 @@
                       phx-value-cell-id={@selected_cell.id}
                       disabled={@selected_answer != nil}
                       class={[
-                        "w-full transition-all duration-300 transform hover:scale-105",
-                        "bg-blue-600/20 rounded-xl p-6",
-                        # Show feedback based on selected answer
+                        "w-full transition-all duration-300 transform",
+                        "p-8 rounded-2xl text-2xl font-semibold text-left",
+                        "flex items-center gap-6",
+                        # Base styles when no answer selected
+                        if(@selected_answer == nil,
+                          do: "hover:scale-[1.02] hover:-translate-y-1 bg-blue-600/20 hover:bg-blue-600/30",
+                          else: ""),
+                        # Styles when answer is selected
                         if(@selected_answer != nil) do
                           cond do
                             # Correct answer - always highlight in green
                             @selected_cell.data["correct_option"] == index ->
-                              "bg-green-600/30 border-2 border-green-500"
+                              "bg-green-600/30 border-2 border-green-500 shadow-lg shadow-green-500/20"
                             # Wrong answer that was selected - highlight in red
                             @selected_answer == index ->
-                              "bg-red-600/30 border-2 border-red-500"
+                              "bg-red-600/30 border-2 border-red-500 shadow-lg shadow-red-500/20"
                             # Other options - dim them
                             true ->
-                              "opacity-50"
+                              "opacity-50 bg-blue-600/10"
                           end
                         else
-                          # Default hover state when no answer selected
-                          "hover:bg-blue-600/30"
+                          ""
                         end
                       ]}>
-                      <div class="flex items-center gap-4">
-                        <div class={[
-                          "w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold",
-                          if(@selected_answer != nil) do
-                            cond do
-                              @selected_cell.data["correct_option"] == index -> "bg-green-500/50"
-                              @selected_answer == index -> "bg-red-500/50"
-                              true -> "bg-blue-500/30"
-                            end
-                          else
-                            "bg-blue-500/30"
+                      <div class={[
+                        "w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold",
+                        if(@selected_answer != nil) do
+                          cond do
+                            @selected_cell.data["correct_option"] == index -> "bg-green-500/50 text-green-100"
+                            @selected_answer == index -> "bg-red-500/50 text-red-100"
+                            true -> "bg-blue-500/30 text-blue-200"
                           end
-                        ]}>
-                          <%= index %>
-                        </div>
-                        <div class="flex-1 text-left text-2xl font-semibold">
-                          <%= option %>
-                        </div>
-                        <%= if @selected_answer != nil do %>
-                          <%= if @selected_cell.data["correct_option"] == index do %>
-                            <.icon name="hero-check-circle" class="h-8 w-8 text-green-400"/>
-                          <% end %>
-                          <%= if @selected_answer == index && @selected_answer != @selected_cell.data["correct_option"] do %>
-                            <.icon name="hero-x-circle" class="h-8 w-8 text-red-400"/>
-                          <% end %>
-                        <% end %>
+                        else
+                          "bg-blue-500/30 text-blue-200"
+                        end
+                      ]}>
+                        <%= index %>
                       </div>
+                      <div class="flex-1">
+                        <%= option %>
+                      </div>
+                      <%= if @selected_answer != nil do %>
+                        <%= if @selected_cell.data["correct_option"] == index do %>
+                          <.icon name="hero-check-circle" class="h-8 w-8 text-green-400"/>
+                        <% end %>
+                        <%= if @selected_answer == index && @selected_answer != @selected_cell.data["correct_option"] do %>
+                          <.icon name="hero-x-circle" class="h-8 w-8 text-red-400"/>
+                        <% end %>
+                      <% end %>
                     </button>
                   <% end %>
                 </div>
