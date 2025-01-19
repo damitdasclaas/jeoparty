@@ -21,9 +21,276 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
+import * as d3 from "d3"
 
 // Define hooks
 const Hooks = {
+  D3Scoreboard: {
+    mounted() {
+      // Store the container element
+      this.container = this.el;
+      this.initScoreboard();
+      this.updateScoreboard();
+
+      // Handle LiveView updates
+      this.handleEvent("reload_page", () => {
+        window.location.reload();
+      });
+
+      // Add resize observer to handle container size changes
+      this.resizeObserver = new ResizeObserver(() => {
+        this.handleResize();
+      });
+      this.resizeObserver.observe(this.container);
+    },
+    updated() {
+      // Ensure SVG exists
+      if (!this.svg || this.svg.empty()) {
+        this.initScoreboard();
+      }
+
+      // Only update if teams data has changed
+      const newTeams = JSON.parse(this.el.dataset.teams);
+      const currentTeams = this.lastTeams;
+      
+      if (!currentTeams || JSON.stringify(newTeams) !== JSON.stringify(currentTeams)) {
+        this.lastTeams = newTeams;
+        this.updateScoreboard();
+      }
+    },
+    destroyed() {
+      // Clean up when the element is removed
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect();
+      }
+      if (this.svg) {
+        this.svg.remove();
+      }
+    },
+    handleResize() {
+      if (!this.svg || this.svg.empty()) return;
+
+      const width = this.container.clientWidth;
+      this.svg.attr("width", width);
+      this.width = width - this.margin.left - this.margin.right;
+      this.updateScoreboard();
+    },
+    initScoreboard() {
+      // Store margin for reuse
+      this.margin = { top: 20, right: 20, bottom: 20, left: 20 };
+
+      // Remove any existing SVG first
+      d3.select(this.container).selectAll("svg").remove();
+
+      const width = this.container.clientWidth;
+      const height = 500;
+
+      // Create SVG
+      this.svg = d3.select(this.container)
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("class", "overflow-visible");
+
+      // Create container for bars
+      this.chartGroup = this.svg
+        .append("g")
+        .attr("class", "chart-group")
+        .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`);
+
+      // Store dimensions
+      this.width = width - this.margin.left - this.margin.right;
+      this.height = height - this.margin.top - this.margin.bottom;
+
+      // Store initial teams data
+      this.lastTeams = JSON.parse(this.el.dataset.teams);
+    },
+    updateScoreboard() {
+      // Safety check
+      if (!this.svg || this.svg.empty()) {
+        this.initScoreboard();
+      }
+
+      const teams = JSON.parse(this.el.dataset.teams);
+      const barHeight = 60;
+      const barPadding = 10;
+      const cornerRadius = 8;
+
+      // Update SVG height based on number of teams
+      const height = Math.max(500, (barHeight + barPadding) * teams.length + 40);
+      this.svg.attr("height", height);
+      this.height = height - this.margin.top - this.margin.bottom;
+
+      // Create scales
+      const xScale = d3.scaleLinear()
+        .domain([0, Math.max(d3.max(teams, d => Math.abs(d.score)), 100)])
+        .range([0, this.width - 200]); // Leave space for team names
+
+      const yScale = d3.scaleBand()
+        .domain(teams.map(d => d.id))
+        .range([0, this.height])
+        .padding(0.1);
+
+      // Color scale for rank
+      const colorScale = d3.scaleOrdinal()
+        .domain([1, 2, 3])
+        .range(["#fbbf24", "#9ca3af", "#d97706"])
+        .unknown("#3b82f6");
+
+      // Create bars with animated transitions
+      const bars = this.chartGroup.selectAll(".score-bar")
+        .data(teams, d => d.id);
+
+      // Remove old bars with transition
+      bars.exit()
+        .transition()
+        .duration(500)
+        .style("opacity", 0)
+        .remove();
+
+      // Create new bars
+      const barsEnter = bars.enter()
+        .append("g")
+        .attr("class", "score-bar")
+        .style("opacity", 0);
+
+      // Update existing bars and new bars
+      const barsUpdate = barsEnter.merge(bars);
+
+      // Transition for position and opacity
+      barsUpdate.transition()
+        .duration(750)
+        .style("opacity", 1)
+        .attr("transform", d => `translate(0, ${yScale(d.id)})`);
+
+      // Background rect
+      barsUpdate.selectAll(".bar-bg")
+        .data(d => [d])
+        .join(
+          enter => enter.append("rect")
+            .attr("class", "bar-bg")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", this.width)
+            .attr("height", barHeight)
+            .attr("rx", cornerRadius)
+            .attr("fill", d => d3.color(colorScale(d.rank)).darker(0.8))
+            .attr("opacity", 0)
+            .transition()
+            .duration(750)
+            .attr("opacity", 0.2),
+          update => update.transition()
+            .duration(750)
+            .attr("width", this.width)
+            .attr("fill", d => d3.color(colorScale(d.rank)).darker(0.8))
+        );
+
+      // Score bars
+      barsUpdate.selectAll(".bar")
+        .data(d => [d])
+        .join(
+          enter => enter.append("rect")
+            .attr("class", "bar")
+            .attr("x", 200)
+            .attr("y", barPadding)
+            .attr("height", barHeight - barPadding * 2)
+            .attr("rx", cornerRadius)
+            .attr("width", 0)
+            .style("fill", d => colorScale(d.rank))
+            .transition()
+            .duration(750)
+            .attr("width", d => xScale(Math.abs(d.score))),
+          update => update.transition()
+            .duration(750)
+            .style("fill", d => colorScale(d.rank))
+            .attr("width", d => xScale(Math.abs(d.score)))
+        );
+
+      // Rank circles
+      barsUpdate.selectAll(".rank")
+        .data(d => [d])
+        .join(
+          enter => {
+            const rankGroup = enter.append("g")
+              .attr("class", "rank")
+              .attr("transform", d => `translate(20, ${barHeight/2})`);
+            
+            rankGroup.append("circle")
+              .attr("r", 16)
+              .attr("fill", d => colorScale(d.rank));
+            
+            rankGroup.append("text")
+              .attr("text-anchor", "middle")
+              .attr("dy", "0.35em")
+              .attr("fill", "white")
+              .attr("font-weight", "bold")
+              .text(d => d.rank);
+            
+            return rankGroup;
+          },
+          update => {
+            update.select("circle")
+              .transition()
+              .duration(750)
+              .attr("fill", d => colorScale(d.rank));
+            
+            update.select("text")
+              .transition()
+              .duration(750)
+              .tween("text", function(d) {
+                const i = d3.interpolateRound(+this.textContent || 0, d.rank);
+                return function(t) {
+                  this.textContent = i(t);
+                };
+              });
+            
+            return update;
+          }
+        );
+
+      // Team names
+      barsUpdate.selectAll(".team-name")
+        .data(d => [d])
+        .join(
+          enter => enter.append("text")
+            .attr("class", "team-name")
+            .attr("x", 50)
+            .attr("y", barHeight/2)
+            .attr("dy", "0.35em")
+            .attr("fill", "white")
+            .attr("font-size", "16px")
+            .attr("font-weight", "500")
+            .text(d => d.name),
+          update => update.text(d => d.name)
+        );
+
+      // Score text
+      barsUpdate.selectAll(".score")
+        .data(d => [d])
+        .join(
+          enter => enter.append("text")
+            .attr("class", "score")
+            .attr("x", d => 210 + xScale(Math.abs(d.score)))
+            .attr("y", barHeight/2)
+            .attr("dy", "0.35em")
+            .attr("fill", "white")
+            .attr("font-size", "20px")
+            .attr("font-weight", "bold")
+            .text(d => `$${d.score.toLocaleString()}`),
+          update => update
+            .transition()
+            .duration(750)
+            .attr("x", d => 210 + xScale(Math.abs(d.score)))
+            .tween("text", function(d) {
+              const i = d3.interpolate(this._current || d.score, d.score);
+              this._current = d.score;
+              return function(t) {
+                d3.select(this).text(`$${Math.round(i(t)).toLocaleString()}`);
+              };
+            })
+        );
+    }
+  },
   AnimateScore: {
     mounted() {
       this.handleScoreChange();
