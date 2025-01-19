@@ -319,12 +319,130 @@
         <!-- Content -->
         <div class="p-4 space-y-4 overflow-y-auto">
           <!-- Question -->
-          <div class="space-y-1">
-            <h4 class="text-sm font-medium text-gray-400">Question</h4>
-            <div class="p-3 bg-gray-700 rounded-lg text-gray-100">
-              <%= @selected_cell.data["question"] %>
-            </div>
-          </div>
+          <%= case @selected_cell.type do %>
+            <% "picture" -> %>
+              <%= if @selected_cell.data["image_url"] do %>
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-medium text-gray-400">Image</h4>
+                    <a href={@selected_cell.data["image_url"]} 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
+                      <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4"/>
+                      <span>Open in new tab</span>
+                    </a>
+                  </div>
+                  <div class="rounded-lg overflow-hidden bg-gray-700">
+                    <img src={@selected_cell.data["image_url"]} alt="Question Image" class="w-full object-contain max-h-64"/>
+                  </div>
+                </div>
+              <% end %>
+            <% "video" -> %>
+              <%= if @selected_cell.data["video_url"] do %>
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-medium text-gray-400">Video</h4>
+                    <%= if String.starts_with?(@selected_cell.data["video_url"], "/uploads/") do %>
+                      <a href={@selected_cell.data["video_url"]} 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
+                        <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4"/>
+                        <span>Open in new tab</span>
+                      </a>
+                    <% end %>
+                  </div>
+                  <div class="rounded-lg overflow-hidden bg-gray-700">
+                    <div class="aspect-w-16 aspect-h-9">
+                      <%= if String.starts_with?(@selected_cell.data["video_url"], "/uploads/") do %>
+                        <video controls class="w-full">
+                          <source src={@selected_cell.data["video_url"]} type="video/mp4">
+                          Your browser does not support the video tag.
+                        </video>
+                      <% else %>
+                        <%= case EmbedConverter.convert_url(@selected_cell.data["video_url"]) do %>
+                          <% {:ok, embed_url} -> %>
+                            <iframe
+                              src={embed_url}
+                              class="w-full h-full"
+                              frameborder="0"
+                              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowfullscreen
+                            ></iframe>
+                          <% {:error, _} -> %>
+                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                              Video preview not available
+                            </div>
+                        <% end %>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            <% "audio" -> %>
+              <%= if @selected_cell.data["audio_url"] do %>
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-medium text-gray-400">Audio</h4>
+                    <%= if String.starts_with?(@selected_cell.data["audio_url"], "/uploads/") do %>
+                      <a href={@selected_cell.data["audio_url"]} 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
+                        <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4"/>
+                        <span>Open in new tab</span>
+                      </a>
+                    <% end %>
+                  </div>
+                  <div class="rounded-lg overflow-hidden bg-gray-700 p-4">
+                    <audio controls class="w-full">
+                      <source src={@selected_cell.data["audio_url"]} type="audio/mpeg">
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+                </div>
+              <% end %>
+            <% "multiple_choice" -> %>
+              <div class="space-y-4">
+                <div class="space-y-1">
+                  <h4 class="text-sm font-medium text-gray-400">Question</h4>
+                  <div class="p-3 bg-gray-700 rounded-lg text-gray-100">
+                    <%= @selected_cell.data["question"] %>
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <h4 class="text-sm font-medium text-gray-400">Options</h4>
+                  <div class="space-y-2">
+                    <%= for {option, index} <- Enum.with_index(@selected_cell.data["options"], 1) do %>
+                      <div class={[
+                        "p-3 rounded-lg flex items-center gap-3",
+                        if(@selected_cell.data["correct_option"] == index, 
+                          do: "bg-green-900/50 text-green-100", 
+                          else: "bg-gray-700 text-gray-100")
+                      ]}>
+                        <div class={[
+                          "w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium",
+                          if(@selected_cell.data["correct_option"] == index, 
+                            do: "bg-green-500 text-green-900", 
+                            else: "bg-gray-600 text-gray-300")
+                        ]}>
+                          <%= index %>
+                        </div>
+                        <div class="flex-1">
+                          <%= option %>
+                        </div>
+                        <%= if @selected_cell.data["correct_option"] == index do %>
+                          <.icon name="hero-check-circle" class="h-5 w-5 text-green-400"/>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% _ -> %>
+          <% end %>
 
           <!-- Answer -->
           <div class="space-y-1">

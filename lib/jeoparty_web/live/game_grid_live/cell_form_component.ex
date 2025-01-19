@@ -10,7 +10,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   def mount(socket) do
     {:ok,
      socket
-     |> assign(show_source: false, image_input_type: "url", video_input_type: "url")
+     |> assign(show_source: false, image_input_type: "url", video_input_type: "url", current_type: "text")
      |> allow_upload(:image_upload,
         accept: ~w(.jpg .jpeg .png .gif),
         max_entries: 1,
@@ -52,12 +52,14 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
               type="select"
               label="Type"
               prompt="Choose a type"
-              options={[{"Text", "text"}, {"Picture", "picture"}, {"Video", "video"}, {"Audio", "audio"}]}
+              options={[{"Text", "text"}, {"Picture", "picture"}, {"Video", "video"}, {"Audio", "audio"}, {"Multiple Choice", "multiple_choice"}]}
               class="w-full"
+              phx-change="type_changed"
+              phx-target={@myself}
             />
           </div>
 
-          <%= case input_value(@form, :type) do %>
+          <%= case input_value(@form, :type) || @current_type do %>
             <% "text" -> %>
               <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
                 <.input
@@ -295,6 +297,44 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
                   <% end %>
                 </div>
               </div>
+            <% "multiple_choice" -> %>
+              <div class="bg-gray-900 rounded-lg p-4 space-y-4 border border-gray-700">
+                <.input
+                  field={@form[:question]}
+                  type="text"
+                  label="Question"
+                />
+
+                <div class="space-y-4">
+                  <label class="block text-sm font-medium text-gray-200">Answer Options</label>
+                  <div class="space-y-3">
+                    <%= for i <- 1..4 do %>
+                      <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                          <.input
+                            field={@form[:"option_#{i}"]}
+                            type="text"
+                            placeholder={"Option #{i}"}
+                          />
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="correct_option"
+                            value={i}
+                            checked={@selected_correct_option == i}
+                            phx-click="select_correct_option"
+                            phx-target={@myself}
+                            phx-value-option={i}
+                            class="form-radio"
+                          />
+                          <span class="text-sm text-gray-300">Correct</span>
+                        </label>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
             <% _ -> %>
               <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
                 <.input
@@ -306,11 +346,13 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
           <% end %>
 
           <div class="bg-gray-900 rounded-lg p-4 space-y-4 border border-gray-700">
-            <.input
-              field={@form[:answer]}
-              type="text"
-              label="Answer"
-            />
+            <%= unless input_value(@form, :type) == "multiple_choice" do %>
+              <.input
+                field={@form[:answer]}
+                type="text"
+                label="Answer"
+              />
+            <% end %>
 
             <div class="flex items-center gap-2">
               <.input
@@ -373,15 +415,28 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
       image_input_type = if image_url && String.starts_with?(image_url, "/uploads/"), do: "upload", else: "url"
       video_input_type = if video_url && String.starts_with?(video_url, "/uploads/"), do: "upload", else: "url"
 
-      %{
-        "type" => assigns.editing_cell.type,
-        "question" => assigns.editing_cell.data["question"],
-        "points" => assigns.editing_cell.data["points"],
-        "image_url" => if(image_input_type == "url", do: image_url, else: ""),
-        "video_url" => if(video_input_type == "url", do: video_url, else: ""),
-        "answer" => assigns.editing_cell.data["answer"],
-        "answer_source_url" => assigns.editing_cell.data["answer_source_url"]
-      }
+      # Add options to initial params
+      option_params = if assigns.editing_cell.type == "multiple_choice" do
+        assigns.editing_cell.data["options"]
+        |> Enum.with_index(1)
+        |> Enum.map(fn {option, index} -> {"option_#{index}", option} end)
+        |> Map.new()
+      else
+        %{}
+      end
+
+      Map.merge(
+        %{
+          "type" => assigns.editing_cell.type,
+          "question" => assigns.editing_cell.data["question"],
+          "points" => assigns.editing_cell.data["points"],
+          "image_url" => if(image_input_type == "url", do: image_url, else: ""),
+          "video_url" => if(video_input_type == "url", do: video_url, else: ""),
+          "answer" => assigns.editing_cell.data["answer"],
+          "answer_source_url" => assigns.editing_cell.data["answer_source_url"]
+        },
+        option_params
+      )
     else
       %{
         "type" => "text",
@@ -396,12 +451,20 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
 
     changeset = Cell.changeset(%Cell{}, initial_params)
 
+    # Set default correct option to 1 for new multiple choice questions
+    selected_correct_option = cond do
+      assigns[:editing_cell] -> assigns.editing_cell.data["correct_option"]
+      initial_params["type"] == "multiple_choice" -> 1
+      true -> nil
+    end
+
     {:ok,
      socket
      |> assign(assigns)
      |> assign(:editing_cell, assigns[:editing_cell])
      |> assign(:image_input_type, if(assigns[:editing_cell], do: if(String.starts_with?(assigns.editing_cell.data["image_url"] || "", "/uploads/"), do: "upload", else: "url"), else: "url"))
      |> assign(:video_input_type, if(assigns[:editing_cell], do: if(String.starts_with?(assigns.editing_cell.data["video_url"] || "", "/uploads/"), do: "upload", else: "url"), else: "url"))
+     |> assign(:selected_correct_option, selected_correct_option)
      |> assign_form(changeset)}
   end
 
@@ -421,10 +484,56 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   end
 
   @impl true
-  def handle_event("validate", params, socket) do
+  def handle_event("type_changed", %{"cell" => %{"type" => type}}, socket) do
+    # Set default correct option to 1 if switching to multiple choice
+    socket = if type == "multiple_choice" && !socket.assigns.selected_correct_option do
+      assign(socket, :selected_correct_option, 1)
+    else
+      socket
+    end
+
+    # Create a new changeset with the current form values and new type
+    current_params = Map.merge(
+      socket.assigns.form.params,
+      %{
+        "type" => type,
+        "option_1" => socket.assigns.form.params["option_1"] || "",
+        "option_2" => socket.assigns.form.params["option_2"] || "",
+        "option_3" => socket.assigns.form.params["option_3"] || "",
+        "option_4" => socket.assigns.form.params["option_4"] || ""
+      }
+    )
+
     changeset =
       %Cell{}
-      |> Cell.changeset(params["cell"] || %{})
+      |> Cell.changeset(current_params)
+      |> Map.put(:action, :validate)
+
+    {:noreply,
+     socket
+     |> assign(:current_type, type)
+     |> assign_form(changeset)}
+  end
+
+  @impl true
+  def handle_event("validate", %{"cell" => params}, socket) do
+    # Always use current_type if it's set
+    params = Map.put(params, "type", socket.assigns.current_type || params["type"])
+
+    # For multiple choice, preserve the options in the changeset
+    params = if socket.assigns.current_type == "multiple_choice" do
+      # Convert option keys to strings to avoid mixed key types
+      options = for i <- 1..4 do
+        {"option_#{i}", params["option_#{i}"] || socket.assigns.form.params["option_#{i}"] || ""}
+      end
+      Map.merge(params, Map.new(options))
+    else
+      params
+    end
+
+    changeset =
+      %Cell{}
+      |> Cell.changeset(params)
       |> Map.put(:action, :validate)
 
     {:noreply,
@@ -435,42 +544,65 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
 
   @impl true
   def handle_event("save", %{"cell" => params}, socket) do
-    uploaded_image_url = handle_image_upload(socket)
-    uploaded_video_url = handle_video_upload(socket)
-    uploaded_audio_url = handle_audio_upload(socket)
-
-    # Determine final image URL based on input type and uploads
-    image_url = case socket.assigns.image_input_type do
-      "upload" -> uploaded_image_url || (socket.assigns[:editing_cell] && socket.assigns.editing_cell.data["image_url"])
-      _ -> params["image_url"]
-    end
-
-    # Determine final video URL based on input type and uploads
-    video_url = case socket.assigns.video_input_type do
-      "upload" -> uploaded_video_url || (socket.assigns[:editing_cell] && socket.assigns.editing_cell.data["video_url"])
-      _ -> params["video_url"]
-    end
-
-    attrs = %{
-      row: socket.assigns.row,
-      column: socket.assigns.column,
-      game_grid_id: socket.assigns.game_grid_id,
-      type: params["type"] || "text",
-      data: %{
-        "question" => params["question"],
-        "points" => if(params["points"] == "", do: nil, else: params["points"]),
-        "image_url" => image_url,
-        "video_url" => video_url,
-        "audio_url" => uploaded_audio_url || (socket.assigns[:editing_cell] && socket.assigns.editing_cell.data["audio_url"]),
-        "answer" => params["answer"],
-        "answer_source_url" => params["answer_source_url"]
-      }
-    }
-
-    if socket.assigns.editing_cell do
-      update_cell(socket.assigns.editing_cell, attrs, socket)
+    # Ensure there's a correct option selected for multiple choice
+    if params["type"] == "multiple_choice" && !socket.assigns.selected_correct_option do
+      {:noreply,
+       socket
+       |> put_flash(:error, "Please select a correct answer for the multiple choice question")}
     else
-      create_cell(attrs, socket)
+      uploaded_image_url = handle_image_upload(socket)
+      uploaded_video_url = handle_video_upload(socket)
+      uploaded_audio_url = handle_audio_upload(socket)
+
+      # Determine final image URL based on input type and uploads
+      image_url = case socket.assigns.image_input_type do
+        "upload" -> uploaded_image_url || (socket.assigns[:editing_cell] && socket.assigns.editing_cell.data["image_url"])
+        _ -> params["image_url"]
+      end
+
+      # Determine final video URL based on input type and uploads
+      video_url = case socket.assigns.video_input_type do
+        "upload" -> uploaded_video_url || (socket.assigns[:editing_cell] && socket.assigns.editing_cell.data["video_url"])
+        _ -> params["video_url"]
+      end
+
+      # Process multiple choice options if applicable
+      {options, correct_option, answer} = if params["type"] == "multiple_choice" do
+        options = 1..4
+          |> Enum.map(&(params["option_#{&1}"]))
+          |> Enum.reject(&(is_nil(&1) || &1 == ""))
+
+        correct_option = socket.assigns.selected_correct_option
+        answer = if correct_option, do: Enum.at(options, correct_option - 1), else: nil
+
+        {options, correct_option, answer}
+      else
+        {nil, nil, params["answer"]}
+      end
+
+      attrs = %{
+        row: socket.assigns.row,
+        column: socket.assigns.column,
+        game_grid_id: socket.assigns.game_grid_id,
+        type: params["type"] || "text",
+        data: %{
+          "question" => params["question"],
+          "points" => if(params["points"] == "", do: nil, else: params["points"]),
+          "image_url" => image_url,
+          "video_url" => video_url,
+          "audio_url" => uploaded_audio_url || (socket.assigns[:editing_cell] && socket.assigns.editing_cell.data["audio_url"]),
+          "answer" => answer,
+          "answer_source_url" => params["answer_source_url"],
+          "options" => options,
+          "correct_option" => correct_option
+        }
+      }
+
+      if socket.assigns.editing_cell do
+        update_cell(socket.assigns.editing_cell, attrs, socket)
+      else
+        create_cell(attrs, socket)
+      end
     end
   end
 
@@ -676,4 +808,11 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
     end
   end
   defp get_image_url(_), do: nil
+
+  # Add handler for correct option selection
+  @impl true
+  def handle_event("select_correct_option", %{"option" => option}, socket) do
+    option = String.to_integer(option)
+    {:noreply, assign(socket, :selected_correct_option, option)}
+  end
 end

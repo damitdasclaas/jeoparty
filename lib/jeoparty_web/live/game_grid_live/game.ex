@@ -22,6 +22,7 @@ defmodule JeopartyWeb.GameGridLive.Game do
      |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids || []))
      |> assign(:show_modal, false)
      |> assign(:selected_cell, nil)
+     |> assign(:selected_answer, nil)
      |> assign(:page_title, "Game View - #{game_grid.name}")}
   end
 
@@ -45,6 +46,17 @@ defmodule JeopartyWeb.GameGridLive.Game do
   end
 
   @impl true
+  def handle_event("select_answer", %{"option" => option, "cell-id" => cell_id}, socket) do
+    selected_option = String.to_integer(option)
+
+    if is_nil(socket.assigns.selected_answer) do
+      {:noreply, assign(socket, :selected_answer, selected_option)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
   def handle_event("close_modal", _, socket) do
     if socket.assigns.selected_cell do
       PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:view_toggled, nil})
@@ -54,7 +66,8 @@ defmodule JeopartyWeb.GameGridLive.Game do
     {:noreply,
      socket
      |> assign(:show_modal, false)
-     |> assign(:selected_cell, nil)}
+     |> assign(:selected_cell, nil)
+     |> assign(:selected_answer, nil)}
   end
 
   @impl true
