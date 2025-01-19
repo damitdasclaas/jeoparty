@@ -25,6 +25,8 @@ defmodule JeopartyWeb.GameGridLive.Admin do
      |> assign(:viewed_cell_id, game_grid.viewed_cell_id)
      |> assign(:show_cell_details, false)
      |> assign(:selected_cell, nil)
+     |> assign(:selected_answer, nil)
+     |> assign(:selected_answers, game_grid.selected_answers || %{})
      |> assign(:show_add_team, false)
      |> assign(:show_leaderboard, false)
      |> assign(:editing_team_id, nil)
@@ -35,7 +37,7 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   @impl true
   def handle_event("show_cell_details", %{"id" => cell_id}, socket) do
     cell = Enum.find(socket.assigns.cells, &(&1.id == cell_id))
-    {:noreply, socket |> assign(:show_cell_details, true) |> assign(:selected_cell, cell)}
+    {:noreply, socket |> assign(:show_cell_details, true) |> assign(:selected_cell, cell) |> assign(:selected_answer, nil)}
   end
 
   @impl true
@@ -55,7 +57,11 @@ defmodule JeopartyWeb.GameGridLive.Admin do
 
   @impl true
   def handle_event("close_modal", _params, socket) do
-    {:noreply, assign(socket, show_cell_details: false, selected_cell: nil)}
+    {:noreply,
+     socket
+     |> assign(:show_cell_details, false)
+     |> assign(:selected_cell, nil)
+     |> assign(:selected_answer, nil)}
   end
 
   @impl true
@@ -350,7 +356,8 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     {:noreply,
      socket
      |> assign(:show_cell_details, true)
-     |> assign(:selected_cell, cell)}
+     |> assign(:selected_cell, cell)
+     |> assign(:selected_answer, nil)}
   end
 
   @impl true
@@ -358,7 +365,8 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     {:noreply,
      socket
      |> assign(:show_cell_details, false)
-     |> assign(:selected_cell, nil)}
+     |> assign(:selected_cell, nil)
+     |> assign(:selected_answer, nil)}
   end
 
   @impl true
