@@ -465,6 +465,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
      |> assign(:image_input_type, if(assigns[:editing_cell], do: if(String.starts_with?(assigns.editing_cell.data["image_url"] || "", "/uploads/"), do: "upload", else: "url"), else: "url"))
      |> assign(:video_input_type, if(assigns[:editing_cell], do: if(String.starts_with?(assigns.editing_cell.data["video_url"] || "", "/uploads/"), do: "upload", else: "url"), else: "url"))
      |> assign(:selected_correct_option, selected_correct_option)
+     |> assign(:current_type, initial_params["type"])  # Make sure we set the initial type
      |> assign_form(changeset)}
   end
 
@@ -517,11 +518,11 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
 
   @impl true
   def handle_event("validate", %{"cell" => params}, socket) do
-    # Always use current_type if it's set
-    params = Map.put(params, "type", socket.assigns.current_type || params["type"])
+    # Always preserve the current type, whether from params or socket state
+    current_type = params["type"] || socket.assigns.current_type
 
     # For multiple choice, preserve the options in the changeset
-    params = if socket.assigns.current_type == "multiple_choice" do
+    params = if current_type == "multiple_choice" do
       # Convert option keys to strings to avoid mixed key types
       options = for i <- 1..4 do
         {"option_#{i}", params["option_#{i}"] || socket.assigns.form.params["option_#{i}"] || ""}
@@ -531,6 +532,9 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
       params
     end
 
+    # Ensure type is set correctly
+    params = Map.put(params, "type", current_type)
+
     changeset =
       %Cell{}
       |> Cell.changeset(params)
@@ -538,6 +542,7 @@ defmodule JeopartyWeb.GameGridLive.CellFormComponent do
 
     {:noreply,
      socket
+     |> assign(:current_type, current_type)
      |> assign_form(changeset)
      |> validate_upload()}
   end
