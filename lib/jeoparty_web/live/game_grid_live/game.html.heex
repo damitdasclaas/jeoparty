@@ -1,6 +1,6 @@
 <div class="container mx-auto px-4" phx-hook="GameView" id="game-view">
   <div class="flex items-center justify-between mb-4">
-    <h1 class="text-lg font-medium text-gray-400"><%= @game_grid.name %></h1>
+    <h1 class="text-lg font-medium text-gray-400 font-rubik"><%= @game_grid.name %></h1>
     <div class="flex items-center gap-3">
       <.link 
         navigate={~p"/game_grids"}
@@ -30,91 +30,30 @@
     <% else %>
       <div class="flex flex-col items-center justify-center min-h-[calc(100vh-6rem)]">
         <div class="flex flex-col items-center w-full max-w-6xl mx-auto">
-          <div class="w-full space-y-8" id="leaderboard">
-            <%= 
-              # Sort teams by score and group by score to handle ties
-              teams_with_ranks = @teams
-              |> Enum.sort_by(& &1.score, :desc)
-              |> Enum.chunk_by(& &1.score)
-              |> Enum.with_index(1)
-              |> Enum.flat_map(fn {group, rank} -> 
-                Enum.map(group, fn team -> {team, rank} end)
-              end)
-
-              for {team, rank} <- teams_with_ranks do 
-            %>
-              <div class={[
-                "transform transition-all duration-500 hover:scale-[1.02]",
-                "rounded-xl shadow-2xl p-8",
-                "leaderboard-entry",
-                # Different sizes based on rank
-                case rank do
-                  1 -> "-mx-8"
-                  2 -> "-mx-4"
-                  3 -> "-mx-2"
-                  _ -> ""
-                end,
-                # Colors based on rank
-                case rank do
-                  1 -> "bg-gradient-to-br from-yellow-500 to-yellow-600"
-                  2 -> "bg-gradient-to-br from-gray-400 to-gray-500"
-                  3 -> "bg-gradient-to-br from-amber-600 to-amber-700"
-                  _ -> "bg-gradient-to-br from-blue-500 to-blue-700"
-                end
-              ]} 
-              id={"team-#{team.id}"} 
-              data-team-id={team.id}
-              data-score={team.score}
-              data-rank={rank}
-              phx-hook="AnimateScore">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <div class={[
-                      "rounded-full flex items-center justify-center font-bold",
-                      # Different sizes for rank badge based on position
-                      case rank do
-                        1 -> "w-14 h-14 text-3xl"
-                        2 -> "w-12 h-12 text-2xl"
-                        3 -> "w-11 h-11 text-xl"
-                        _ -> "w-10 h-10 text-lg"
-                      end,
-                      case rank do
-                        1 -> "bg-yellow-400 text-yellow-900"
-                        2 -> "bg-gray-300 text-gray-800"
-                        3 -> "bg-amber-500 text-amber-900"
-                        _ -> "bg-blue-400 text-blue-900"
-                      end
-                    ]}>
-                      <%= rank %>
-                    </div>
-                    <h3 class={[
-                      "font-bold text-white",
-                      # Different text sizes based on rank
-                      case rank do
-                        1 -> "text-3xl"
-                        2 -> "text-2xl"
-                        3 -> "text-xl"
-                        _ -> "text-lg"
-                      end
-                    ]}>
-                      <%= team.name %>
-                    </h3>
-                  </div>
-                  <div class={[
-                    "font-bold text-white",
-                    # Different score sizes based on rank
-                    case rank do
-                      1 -> "text-4xl"
-                      2 -> "text-3xl"
-                      3 -> "text-2xl"
-                      _ -> "text-xl"
-                    end
-                  ]}>
-                    $<%= team.score %>
-                  </div>
-                </div>
+          <div class="w-full relative">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-3xl blur-3xl"></div>
+            <div class="relative">
+              <%
+                # Sort teams by score and group by score to handle ties
+                teams_with_ranks = @teams
+                |> Enum.sort_by(& &1.score, :desc)
+                |> Enum.chunk_by(& &1.score)
+                |> Enum.with_index(1)
+                |> Enum.flat_map(fn {group, rank} -> 
+                  Enum.map(group, fn team -> Map.merge(team, %{rank: rank}) end)
+                end)
+              %>
+              <div 
+                class="w-full"
+                id="d3-scoreboard"
+                phx-hook="D3Scoreboard"
+                phx-update="ignore"
+                data-teams={Jason.encode!(teams_with_ranks)}
+                data-name-font="Rubik"
+                data-points-font="Press Start 2P"
+              >
               </div>
-            <% end %>
+            </div>
           </div>
         </div>
       </div>
@@ -129,13 +68,13 @@
                 <%= if row == 1 do %>
                   <%= if cell = get_cell(@cells, 1, col) do %>
                     <div class="w-full h-full rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
-                      <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-2xl tracking-wide p-4">
+                      <div class="absolute inset-0 flex items-center justify-center text-center font-rubik font-bold text-2xl tracking-wide p-4">
                         <%= cell.data["question"] %>
                       </div>
                     </div>
                   <% else %>
                     <div class="w-full h-full rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
-                      <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-2xl tracking-wide text-white/50">
+                      <div class="absolute inset-0 flex items-center justify-center text-center font-rubik font-bold text-2xl tracking-wide text-white/50">
                         No category
                       </div>
                     </div>
@@ -152,7 +91,7 @@
                       phx-value-id={cell.id}>
                       <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
                         <div class={[
-                          "text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold",
+                          "font-press-start text-xl sm:text-2xl md:text-3xl lg:text-5xl",
                           MapSet.member?(@revealed_cells, cell.id) && "line-through opacity-50"
                         ]}>
                           $<%= cell.data["points"] || (row - 1) * 100 %>
@@ -162,7 +101,7 @@
                   <% else %>
                     <div class="w-full h-full rounded-xl shadow-lg relative bg-gradient-to-br from-gray-500 to-gray-700 text-white opacity-50">
                       <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold">$<%= (row - 1) * 100 %></div>
+                        <div class="font-press-start text-xl sm:text-2xl md:text-3xl lg:text-5xl">$<%= (row - 1) * 100 %></div>
                       </div>
                     </div>
                   <% end %>
@@ -223,7 +162,7 @@
                            alt={@selected_cell.data["question"]} 
                            class="max-h-[40vh] object-contain rounded-lg" />
                     <% end %>
-                    <div class="text-2xl font-bold text-center">
+                    <div class="text-2xl font-bold text-center font-rubik">
                       <%= @selected_cell.data["question"] %>
                     </div>
                   </div>
@@ -243,7 +182,7 @@
                         <.icon name="hero-video-camera" class="h-24 w-24 text-white/60"/>
                       </div>
                     <% end %>
-                    <div class="text-2xl font-bold text-center">
+                    <div class="text-2xl font-bold text-center font-rubik">
                       <%= @selected_cell.data["question"] %>
                     </div>
                   </div>
@@ -266,12 +205,12 @@
                         <.icon name="hero-speaker-wave" class="h-16 w-16 text-white/60"/>
                       </div>
                     <% end %>
-                    <div class="text-2xl font-bold text-center">
+                    <div class="text-2xl font-bold text-center font-rubik">
                       <%= @selected_cell.data["question"] %>
                     </div>
                   </div>
                 <% _ -> %>
-                  <div class="text-4xl font-bold text-center leading-tight py-8">
+                  <div class="text-4xl font-bold text-center leading-tight py-8 font-rubik">
                     <%= @selected_cell.data["question"] %>
                   </div>
               <% end %>

@@ -36,10 +36,15 @@ defmodule JeopartyWeb.GameGridLive.Game do
         {socket.assigns.game_grid, socket.assigns.revealed_cells}
       else
         {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell_id)
+        PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:reveal_cell, cell})
         {game_grid, MapSet.new(game_grid.revealed_cell_ids)}
       end
 
       selected_answer = Map.get(socket.assigns.selected_answers, cell_id)
+
+      {:ok, game_grid} = GameGrids.set_viewed_cell(game_grid, cell_id)
+      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:view_toggled, cell})
+      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:preview_cell, cell})
 
       {:noreply,
        socket
