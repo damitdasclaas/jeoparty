@@ -1,6 +1,6 @@
 <div class="container mx-auto px-4" phx-hook="GameView" id="game-view">
   <div class="flex items-center justify-between mb-4">
-    <h1 class="text-lg font-medium text-gray-400"><%= @game_grid.name %></h1>
+    <h1 class="text-lg font-medium text-gray-400 font-rubik"><%= @game_grid.name %></h1>
     <div class="flex items-center gap-3">
       <.link 
         navigate={~p"/game_grids"}
@@ -49,6 +49,8 @@
                 phx-hook="D3Scoreboard"
                 phx-update="ignore"
                 data-teams={Jason.encode!(teams_with_ranks)}
+                data-name-font="Rubik"
+                data-points-font="Press Start 2P"
               >
               </div>
             </div>
@@ -66,13 +68,13 @@
                 <%= if row == 1 do %>
                   <%= if cell = get_cell(@cells, 1, col) do %>
                     <div class="w-full h-full rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
-                      <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-2xl tracking-wide p-4">
+                      <div class="absolute inset-0 flex items-center justify-center text-center font-rubik font-bold text-2xl tracking-wide p-4">
                         <%= cell.data["question"] %>
                       </div>
                     </div>
                   <% else %>
                     <div class="w-full h-full rounded-xl shadow-lg relative bg-gradient-to-br from-indigo-700 to-indigo-900 text-white">
-                      <div class="absolute inset-0 flex items-center justify-center text-center font-bold text-2xl tracking-wide text-white/50">
+                      <div class="absolute inset-0 flex items-center justify-center text-center font-rubik font-bold text-2xl tracking-wide text-white/50">
                         No category
                       </div>
                     </div>
@@ -89,7 +91,7 @@
                       phx-value-id={cell.id}>
                       <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
                         <div class={[
-                          "text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold",
+                          "font-press-start text-xl sm:text-2xl md:text-3xl lg:text-5xl",
                           MapSet.member?(@revealed_cells, cell.id) && "line-through opacity-50"
                         ]}>
                           $<%= cell.data["points"] || (row - 1) * 100 %>
@@ -99,7 +101,7 @@
                   <% else %>
                     <div class="w-full h-full rounded-xl shadow-lg relative bg-gradient-to-br from-gray-500 to-gray-700 text-white opacity-50">
                       <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold">$<%= (row - 1) * 100 %></div>
+                        <div class="font-press-start text-xl sm:text-2xl md:text-3xl lg:text-5xl">$<%= (row - 1) * 100 %></div>
                       </div>
                     </div>
                   <% end %>
@@ -160,7 +162,7 @@
                            alt={@selected_cell.data["question"]} 
                            class="max-h-[40vh] object-contain rounded-lg" />
                     <% end %>
-                    <div class="text-2xl font-bold text-center">
+                    <div class="text-2xl font-bold text-center font-rubik">
                       <%= @selected_cell.data["question"] %>
                     </div>
                   </div>
@@ -180,7 +182,7 @@
                         <.icon name="hero-video-camera" class="h-24 w-24 text-white/60"/>
                       </div>
                     <% end %>
-                    <div class="text-2xl font-bold text-center">
+                    <div class="text-2xl font-bold text-center font-rubik">
                       <%= @selected_cell.data["question"] %>
                     </div>
                   </div>
@@ -203,12 +205,12 @@
                         <.icon name="hero-speaker-wave" class="h-16 w-16 text-white/60"/>
                       </div>
                     <% end %>
-                    <div class="text-2xl font-bold text-center">
+                    <div class="text-2xl font-bold text-center font-rubik">
                       <%= @selected_cell.data["question"] %>
                     </div>
                   </div>
                 <% _ -> %>
-                  <div class="text-4xl font-bold text-center leading-tight py-8">
+                  <div class="text-4xl font-bold text-center leading-tight py-8 font-rubik">
                     <%= @selected_cell.data["question"] %>
                   </div>
               <% end %>

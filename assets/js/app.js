@@ -385,6 +385,7 @@ const Hooks = {
             .attr("fill", "white")
             .attr("font-size", "32px")
             .attr("font-weight", "600")
+            .style("font-family", "'Rubik', sans-serif")
             .style("text-shadow", "0 2px 4px rgba(0,0,0,0.2)")
             .text(d => d.name),
           update => update.text(d => d.name)
@@ -396,18 +397,22 @@ const Hooks = {
         .join(
           enter => enter.append("text")
             .attr("class", "score")
-            .attr("x", d => d.score >= 0 ? 260 + xScale(d.score) : 260)
+            .attr("x", d => d.score >= 0 ? 260 + xScale(d.score) + 20 : 260)
             .attr("y", barHeight/2)
             .attr("dy", "0.35em")
+            .attr("text-anchor", "start")
+            .attr("dominant-baseline", "middle")
             .attr("fill", d => d.score >= 0 ? "white" : "#ef4444")
-            .attr("font-size", "32px")
+            .attr("font-size", "28px")
             .attr("font-weight", "bold")
+            .style("font-family", "'Press Start 2P', cursive")
+            .style("letter-spacing", "-0.05em")
             .style("text-shadow", "0 2px 4px rgba(0,0,0,0.2)")
             .text(d => `$${d.score.toLocaleString()}`),
           update => update
             .transition()
             .duration(750)
-            .attr("x", d => d.score >= 0 ? 260 + xScale(d.score) : 260)
+            .attr("x", d => d.score >= 0 ? 260 + xScale(d.score) + 20 : 260)
             .attr("fill", d => d.score >= 0 ? "white" : "#ef4444")
             .tween("text", function(d) {
               const i = d3.interpolate(this._current || d.score, d.score);
