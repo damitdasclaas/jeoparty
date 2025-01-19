@@ -26,17 +26,21 @@ import topbar from "../vendor/topbar"
 const Hooks = {
   GameView: {
     mounted() {
-      this.handleViewTransition();
+      this.handleViewTransition(true);
+      this.lastView = this.el.querySelector("#leaderboard") ? "standings" : "grid";
     },
     updated() {
-      this.handleViewTransition();
+      const currentView = this.el.querySelector("#leaderboard") ? "standings" : "grid";
+      if (currentView !== this.lastView) {
+        this.handleViewTransition(true);
+        this.lastView = currentView;
+      }
     },
-    handleViewTransition() {
+    handleViewTransition(animate = false) {
       const grid = this.el.querySelector("table");
       const standings = this.el.querySelector("#leaderboard")?.parentElement;
       
-      // Hide both views initially
-      if (grid) {
+      if (grid && animate) {
         grid.style.opacity = "0";
         requestAnimationFrame(() => {
           grid.style.opacity = "1";
@@ -49,7 +53,7 @@ const Hooks = {
         });
       }
       
-      if (standings) {
+      if (standings && animate) {
         standings.style.opacity = "0";
         requestAnimationFrame(() => {
           standings.style.opacity = "1";

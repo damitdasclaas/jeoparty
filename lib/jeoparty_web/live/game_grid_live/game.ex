@@ -32,15 +32,19 @@ defmodule JeopartyWeb.GameGridLive.Game do
     cell = Enum.find(socket.assigns.cells, &(&1.id == cell_id))
 
     if cell && !cell.is_category do
-      {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell_id)
-      PubSub.broadcast(Jeoparty.PubSub, "game_grid:#{socket.assigns.game_grid.id}", {:cell_selected, cell})
+      {game_grid, revealed_cells} = if MapSet.member?(socket.assigns.revealed_cells, cell_id) do
+        {socket.assigns.game_grid, socket.assigns.revealed_cells}
+      else
+        {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell_id)
+        {game_grid, MapSet.new(game_grid.revealed_cell_ids)}
+      end
 
       selected_answer = Map.get(socket.assigns.selected_answers, cell_id)
 
       {:noreply,
        socket
        |> assign(:game_grid, game_grid)
-       |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))
+       |> assign(:revealed_cells, revealed_cells)
        |> assign(:show_modal, true)
        |> assign(:selected_cell, cell)
        |> assign(:selected_answer, selected_answer)}
@@ -83,14 +87,19 @@ defmodule JeopartyWeb.GameGridLive.Game do
 
   @impl true
   def handle_info({:cell_selected, cell}, socket) do
-    {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell.id)
+    {game_grid, revealed_cells} = if MapSet.member?(socket.assigns.revealed_cells, cell.id) do
+      {socket.assigns.game_grid, socket.assigns.revealed_cells}
+    else
+      {:ok, game_grid} = GameGrids.reveal_cell(socket.assigns.game_grid, cell.id)
+      {game_grid, MapSet.new(game_grid.revealed_cell_ids)}
+    end
 
     selected_answer = Map.get(socket.assigns.selected_answers, cell.id)
 
     {:noreply,
      socket
      |> assign(:game_grid, game_grid)
-     |> assign(:revealed_cells, MapSet.new(game_grid.revealed_cell_ids))
+     |> assign(:revealed_cells, revealed_cells)
      |> assign(:show_modal, true)
      |> assign(:selected_cell, cell)
      |> assign(:selected_answer, selected_answer)}
