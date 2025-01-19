@@ -20,7 +20,7 @@ defmodule JeopartyWeb.GameGridLive.FormComponent do
         phx-submit="save"
       >
         <.input field={@form[:name]} type="text" label="Name" />
-        <.input field={@form[:columns]} type="number" label="Columns" />
+        <.input field={@form[:columns]} type="number" label="Columns" min="1" />
         <.input field={@form[:rows]} type="number" label="Rows" />
         <.input field={@form[:created_by]} type="hidden" value={@current_user.id} />
         <:actions>
@@ -59,7 +59,7 @@ defmodule JeopartyWeb.GameGridLive.FormComponent do
         {:noreply,
          socket
          |> put_flash(:info, "Game grid updated successfully")
-         |> push_navigate(to: ~p"/game_grids")}
+         |> push_patch(to: get_return_path(socket))}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
@@ -74,7 +74,7 @@ defmodule JeopartyWeb.GameGridLive.FormComponent do
         {:noreply,
          socket
          |> put_flash(:info, "Game grid created successfully")
-         |> push_navigate(to: ~p"/game_grids")}
+         |> push_patch(to: get_return_path(socket))}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
@@ -82,4 +82,12 @@ defmodule JeopartyWeb.GameGridLive.FormComponent do
   end
 
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
+
+  defp get_return_path(socket) do
+    if Map.has_key?(socket.assigns, :return_to) do
+      socket.assigns.return_to
+    else
+      socket.assigns.patch
+    end
+  end
 end
