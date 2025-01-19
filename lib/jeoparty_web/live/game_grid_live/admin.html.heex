@@ -74,7 +74,7 @@
                                   else: "bg-green-500/80")
                               ]}
                             >
-                              <.icon name={if MapSet.member?(@revealed_cells, cell.id), do: "hero-eye-slash", else: "hero-eye"} class="h-5 w-5 md:h-6 md:w-6"/>
+                              <.icon name={if MapSet.member?(@revealed_cells, cell.id), do: "hero-arrow-path", else: "hero-check-circle"} class="h-5 w-5 md:h-6 md:w-6"/>
                             </button>
                             <button 
                               phx-click="view_cell"
@@ -133,8 +133,8 @@
           "bg-indigo-500 text-white hover:bg-indigo-600"
         ]}
           phx-click="hide_all">
-          <.icon name="hero-eye-slash" class="h-5 w-5"/>
-          Hide All Cells
+          <.icon name="hero-arrow-path" class="h-5 w-5"/>
+          Reset All Cells
         </button>
 
         <button class={[
@@ -148,7 +148,7 @@
 • Reset all team scores to 0
 • Show the game grid">
           <.icon name="hero-arrow-path" class="h-5 w-5"/>
-          Reset Game
+          Reset Whole Game
         </button>
       </div>
     </div>
