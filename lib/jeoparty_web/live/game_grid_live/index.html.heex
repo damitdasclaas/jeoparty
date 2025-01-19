@@ -12,45 +12,62 @@
 </.header>
 
 <div class="container mx-auto px-4 py-8">
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <%= for {id, game_grid} <- @streams.game_grids do %>
-      <div class="bg-gray-800 rounded-xl shadow-xl overflow-hidden group">
-        <div class="p-6">
-          <div class="flex items-start justify-between">
-            <h2 class="text-xl font-bold text-gray-100 mb-2"><%= game_grid.name %></h2>
-            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <.link 
-                patch={~p"/game_grids/#{game_grid}/edit"}
-                class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-colors"
-              >
-                <.icon name="hero-pencil" class="h-4 w-4"/>
-              </.link>
-              <.link
-                phx-click={JS.push("delete", value: %{id: game_grid.id}) |> hide("##{id}")}
-                data-confirm="Are you sure you want to delete this game?"
-                class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-red-500/20 text-gray-300 hover:text-red-500 transition-colors"
-              >
-                <.icon name="hero-trash" class="h-4 w-4"/>
-              </.link>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 text-sm text-gray-400 mb-4">
-            <div class="flex items-center gap-1">
-              <.icon name="hero-table-cells" class="h-4 w-4"/>
-              <%= game_grid.columns %> × <%= game_grid.rows %>
-            </div>
-          </div>
-          <.link 
-            navigate={~p"/game_grids/#{game_grid}"}
-            class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            <.icon name="hero-pencil-square" class="h-4 w-4"/>
-            <span>Configure Game</span>
-          </.link>
-        </div>
+  <%= if not @has_games do %>
+    <div class="flex flex-col items-center justify-center py-12 px-4">
+      <div class="bg-gray-800 rounded-xl shadow-xl p-8 text-center max-w-lg w-full">
+        <.icon name="hero-puzzle-piece" class="h-12 w-12 text-gray-400 mx-auto mb-4"/>
+        <h3 class="text-xl font-semibold text-gray-200 mb-2">No Games Yet</h3>
+        <p class="text-gray-400">Create your first game by clicking the "New Game" button above.</p>
       </div>
-    <% end %>
-  </div>
+    </div>
+  <% else %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <%= for game_grid <- @games do %>
+        <div class="bg-gray-800 rounded-xl shadow-xl overflow-hidden group" id={"game-grid-#{game_grid.id}"}>
+          <div class="p-6">
+            <div class="flex items-start justify-between">
+              <h2 class="text-xl font-bold text-gray-100 mb-2"><%= game_grid.name %></h2>
+              <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <.link 
+                  patch={~p"/game_grids/#{game_grid}/edit"}
+                  class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-colors"
+                >
+                  <.icon name="hero-pencil" class="h-4 w-4"/>
+                </.link>
+                <button
+                  phx-click="duplicate"
+                  phx-value-id={game_grid.id}
+                  class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-blue-500/20 text-gray-300 hover:text-blue-400 transition-colors"
+                >
+                  <.icon name="hero-document-duplicate" class="h-4 w-4"/>
+                </button>
+                <.link
+                  phx-click={JS.push("delete", value: %{id: game_grid.id}) |> hide("#game-grid-#{game_grid.id}")}
+                  data-confirm="Are you sure you want to delete this game?"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-red-500/20 text-gray-300 hover:text-red-500 transition-colors"
+                >
+                  <.icon name="hero-trash" class="h-4 w-4"/>
+                </.link>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 text-sm text-gray-400 mb-4">
+              <div class="flex items-center gap-1">
+                <.icon name="hero-table-cells" class="h-4 w-4"/>
+                <%= game_grid.columns %> × <%= game_grid.rows %>
+              </div>
+            </div>
+            <.link 
+              navigate={~p"/game_grids/#{game_grid}"}
+              class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              <.icon name="hero-pencil-square" class="h-4 w-4"/>
+              <span>Configure Game</span>
+            </.link>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </div>
 
 <.modal :if={@live_action in [:new, :edit]} id="game_grid-modal" show on_cancel={JS.navigate(~p"/game_grids")}>

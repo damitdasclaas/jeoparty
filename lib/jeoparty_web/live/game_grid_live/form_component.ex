@@ -59,7 +59,7 @@ defmodule JeopartyWeb.GameGridLive.FormComponent do
         {:noreply,
          socket
          |> put_flash(:info, "Game grid updated successfully")
-         |> push_patch(to: socket.assigns.patch)}
+         |> push_navigate(to: ~p"/game_grids")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
@@ -69,16 +69,14 @@ defmodule JeopartyWeb.GameGridLive.FormComponent do
   defp save_game_grid(socket, :new, game_grid_params) do
     case GameGrids.create_game_grid(game_grid_params) do
       {:ok, game_grid} ->
-        IO.inspect(game_grid, label: "Game grid")
         notify_parent({:saved, game_grid})
 
         {:noreply,
          socket
          |> put_flash(:info, "Game grid created successfully")
-         |> push_patch(to: socket.assigns.patch)}
+         |> push_navigate(to: ~p"/game_grids")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        IO.inspect(changeset, label: "Changeset Error")
         {:noreply, assign(socket, form: to_form(changeset))}
     end
   end
