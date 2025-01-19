@@ -39,6 +39,21 @@ defmodule JeopartyWeb.GameGridLive.Admin do
   end
 
   @impl true
+  def handle_event("show_modal", %{"id" => modal}, socket) do
+    {:noreply, assign(socket, :modal, modal)}
+  end
+
+  @impl true
+  def handle_event("hide_modal", %{"id" => _modal}, socket) do
+    {:noreply, assign(socket, :modal, nil)}
+  end
+
+  @impl true
+  def handle_event("toggle_leaderboard", _, socket) do
+    {:noreply, assign(socket, :show_leaderboard, !socket.assigns.show_leaderboard)}
+  end
+
+  @impl true
   def handle_event("close_modal", _params, socket) do
     {:noreply, assign(socket, show_cell_details: false, selected_cell: nil)}
   end
@@ -378,14 +393,6 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     {:noreply, socket}
   end
 
-  def handle_event("show_modal", %{"id" => modal}, socket) do
-    {:noreply, assign(socket, :modal, modal)}
-  end
-
-  def handle_event("hide_modal", %{"id" => _modal}, socket) do
-    {:noreply, assign(socket, :modal, nil)}
-  end
-
   defp get_cell(cells, row, col) do
     row = if is_binary(row), do: String.to_integer(row), else: row
     col = if is_binary(col), do: String.to_integer(col), else: col
@@ -393,10 +400,5 @@ defmodule JeopartyWeb.GameGridLive.Admin do
     Enum.find(cells, fn cell ->
       cell.row == row && cell.column == col
     end)
-  end
-
-  @impl true
-  def handle_event("toggle_leaderboard", _, socket) do
-    {:noreply, assign(socket, :show_leaderboard, !socket.assigns.show_leaderboard)}
   end
 end

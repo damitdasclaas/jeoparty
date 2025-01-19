@@ -1,7 +1,6 @@
 defmodule JeopartyWeb.GameGridLive.CellFormComponent do
   use JeopartyWeb, :live_component
   import Phoenix.HTML.Form
-  alias Phoenix.LiveView.Upload
 
   alias Jeoparty.Question.Cell
   alias Jeoparty.GameGrids
