@@ -408,7 +408,7 @@ const Hooks = {
             .style("font-family", "'Press Start 2P', cursive")
             .style("letter-spacing", "-0.05em")
             .style("text-shadow", "0 2px 4px rgba(0,0,0,0.2)")
-            .text(d => `$${d.score.toLocaleString()}`),
+            .text(d => `${d.score.toLocaleString()}`),
           update => update
             .transition()
             .duration(750)
@@ -418,7 +418,7 @@ const Hooks = {
               const i = d3.interpolate(this._current || d.score, d.score);
               this._current = d.score;
               return function(t) {
-                d3.select(this).text(`$${Math.round(i(t)).toLocaleString()}`);
+                d3.select(this).text(`${Math.round(i(t)).toLocaleString()}`);
               };
             })
         );
