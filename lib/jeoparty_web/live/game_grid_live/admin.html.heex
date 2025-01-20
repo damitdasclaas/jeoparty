@@ -47,7 +47,7 @@
                       <div class="w-full h-24 sm:h-28 lg:h-32 rounded-xl shadow-lg relative bg-gradient-to-br from-blue-500 to-blue-700 text-white group">
                         <div class="absolute inset-0 flex flex-col items-center justify-center gap-2">
                           <div class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white flex items-center gap-2 sm:gap-3">
-                            <div>$<%= cell.data["points"] || (row - 1) * 100 %></div>
+                            <div><%= cell.data["points"] || (row - 1) * 100 %></div>
                             <%= if cell.data["question"] do %>
                               <%= case cell.type do %>
                                 <% "picture" -> %>
@@ -99,7 +99,7 @@
                     <% else %>
                       <div class="w-full h-24 sm:h-28 lg:h-32 rounded-xl shadow-lg relative bg-gradient-to-br from-gray-500 to-gray-700 text-white opacity-50">
                         <div class="absolute inset-0 flex items-center justify-center">
-                          <div class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">$<%= (row - 1) * 100 %></div>
+                          <div class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold"><%= (row - 1) * 100 %></div>
                         </div>
                       </div>
                     <% end %>
@@ -214,7 +214,7 @@
                     "font-bold",
                     if(team.score < 0, do: "text-red-400", else: "text-blue-400")
                   ]}>
-                    $<%= team.score %>
+                    <%= team.score %>
                   </span>
                 </div>
               <% end %>
@@ -311,7 +311,7 @@
                 "text-4xl font-bold",
                 if(team.score < 0, do: "text-red-400", else: "text-blue-400")
               ]}>
-                $<%= team.score %>
+                <%= team.score %>
               </div>
             </div>
             
@@ -319,20 +319,19 @@
               <div class="flex gap-3">
                 <button phx-click="subtract_points" phx-value-id={team.id} phx-value-points="100"
                         class="flex-1 bg-red-500/20 text-red-400 px-3 py-2 rounded-lg hover:bg-red-500/30 transition-colors font-semibold">
-                  -$100
+                  -100
                 </button>
                 <button phx-click="add_points" phx-value-id={team.id} phx-value-points="100"
                         class="flex-1 bg-green-500/20 text-green-400 px-3 py-2 rounded-lg hover:bg-green-500/30 transition-colors font-semibold">
-                  +$100
+                  +100
                 </button>
               </div>
 
               <form phx-submit="add_custom_points" class="flex gap-2">
                 <input type="hidden" name="team_id" value={team.id}>
                 <div class="relative flex-1">
-                  <input type="number" name="points" placeholder="Custom" required
-                         class="w-full rounded-lg bg-gray-700 border-gray-600 text-gray-100 pl-6 focus:border-blue-500 focus:ring-blue-500 placeholder-gray-400">
-                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                  <input type="number" name="points" placeholder="Custom Value" required
+                         class="w-full rounded-lg bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 focus:ring-blue-500 placeholder-gray-400">
                 </div>
                 <button type="submit" 
                         class="bg-blue-500/20 text-blue-400 p-2 rounded-lg hover:bg-blue-500/30 transition-colors flex items-center justify-center w-10 h-10">
@@ -550,7 +549,7 @@
           <div class="space-y-1">
             <h4 class="text-sm font-medium text-gray-400">Points</h4>
             <div class="p-3 bg-gray-700 rounded-lg">
-              <span class="text-xl font-bold text-blue-400">$<%= @selected_cell.data["points"] || (@selected_cell.row - 1) * 100 %></span>
+              <span class="text-xl font-bold text-blue-400"><%= @selected_cell.data["points"] || (@selected_cell.row - 1) * 100 %></span>
             </div>
           </div>
         </div>
