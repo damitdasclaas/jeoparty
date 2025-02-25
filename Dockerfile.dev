@@ -1,0 +1,46 @@
+ARG ELIXIR_VERSION=1.18.1
+ARG OTP_VERSION=27.2
+ARG DEBIAN_VERSION=bullseye-20250113-slim
+
+FROM hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}
+
+# Install build dependencies
+RUN apt-get update -y && apt-get install -y build-essential git \
+    curl inotify-tools postgresql-client \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean && rm -f /var/lib/apt/lists/*_*
+
+# Create app directory and set as working directory
+WORKDIR /app
+
+# Install hex + rebar
+RUN mix local.hex --force && \
+    mix local.rebar --force
+
+# Set development environment
+ENV MIX_ENV=dev
+
+# Copy configuration files first to optimize caching
+COPY config ./config
+COPY mix.exs mix.lock ./
+
+# Install dependencies
+RUN mix deps.get
+
+# Copy the rest of the application code
+COPY . .
+
+# Install npm dependencies
+RUN cd assets && npm install
+
+# Expose port
+EXPOSE 4000
+
+# Use an entrypoint script to ensure proper environment setup
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+# Set the default command to run when the container starts
+CMD ["mix", "phx.server"] 
