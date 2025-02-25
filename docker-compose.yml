@@ -9,6 +9,36 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db/jeoparty_dev
+      DATABASE_HOST: db
+      SECRET_KEY_BASE: "some_dev_key_not_for_production"
+      PHX_HOST: localhost
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+      - build:/app/_build
+      - deps:/app/deps
+      - node_modules:/app/assets/node_modules
+    command: bash -c "mix phx.server"
 
 volumes:
   postgres_data:
+  build:
+  deps:
+  node_modules:
